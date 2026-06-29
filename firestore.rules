@@ -1,0 +1,16 @@
+rules_version = '2';
+
+// Brewzy Operations — Firestore security rules
+//
+// The app signs every device in with Firebase *anonymous auth* on boot, so the
+// database is never open to the public internet, yet workers still log in with
+// the simple username + PIN model inside the app. Only authenticated clients
+// (i.e. clients that loaded the real app and signed in anonymously) can read or
+// write company data.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

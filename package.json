@@ -1,0 +1,22 @@
+{
+  "name": "brewzy-operations",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Brewzy — Operations Management System (React + Firebase)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && firebase deploy"
+  },
+  "dependencies": {
+    "firebase": "^10.12.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.3.1"
+  }
+}
