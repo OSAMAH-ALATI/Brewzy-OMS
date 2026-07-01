@@ -1,53 +1,27 @@
-// ─────────────────────────────────────────────────────────────
-// Firebase initialisation
-// ─────────────────────────────────────────────────────────────
-// Reads config from Vite env vars (VITE_FIREBASE_*). These keys are public
-// by design — security is enforced by Firestore rules + anonymous auth.
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth'
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: 'AIzaSyDjdACenp3BiiUsZreV-g8cRcWKvp2Mky0',
+  authDomain: 'brewzy-oms.firebaseapp.com',
+  projectId: 'brewzy-oms',
+  storageBucket: 'brewzy-oms.firebasestorage.app',
+  messagingSenderId: '331155070898',
+  appId: '1:331155070898:web:00126ba136eac0c14d8eab',
 }
 
-// True only when the essential config is present.
-export const isFirebaseConfigured = Boolean(
-  firebaseConfig.apiKey && firebaseConfig.projectId,
-)
+export const isFirebaseConfigured = true
 
-let app = null
-let dbRef = null
-let authRef = null
+const app = initializeApp(firebaseConfig)
+export const db = getFirestore(app)
+export const auth = getAuth(app)
 
-if (isFirebaseConfigured) {
-  app = initializeApp(firebaseConfig)
-  dbRef = getFirestore(app)
-  authRef = getAuth(app)
-}
-
-export const db = dbRef
-export const auth = authRef
-
-// Sign the device in anonymously so Firestore rules (request.auth != null)
-// are satisfied. Resolves once we have a Firebase user.
 export function ensureSignedIn() {
   return new Promise((resolve, reject) => {
-    if (!authRef) {
-      reject(new Error('Firebase is not configured'))
-      return
-    }
-    const unsub = onAuthStateChanged(authRef, (user) => {
-      if (user) {
-        unsub()
-        resolve(user)
-      }
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) { unsub(); resolve(user) }
     })
-    signInAnonymously(authRef).catch(reject)
+    signInAnonymously(auth).catch(reject)
   })
 }
