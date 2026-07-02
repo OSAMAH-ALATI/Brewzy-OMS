@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { getDueStatus, formatDate } from '../lib/utils.js'
 import ServiceModal from '../components/ServiceModal.jsx'
 import IssueModal from '../components/IssueModal.jsx'
@@ -7,6 +8,7 @@ import IssueModal from '../components/IssueModal.jsx'
 // Worker (operator/technician) view of THEIR assigned machines.
 export default function RoutePage({ onNavigate }) {
   const { machines, issues, emptyRecords, session, getUserName } = useApp()
+  const { t } = useT()
 
   const [serviceId, setServiceId] = useState(undefined) // undefined = closed
   const [issueMachineId, setIssueMachineId] = useState(undefined)
@@ -37,30 +39,30 @@ export default function RoutePage({ onNavigate }) {
     <div>
       <div className="ph">
         <div className="ph-text">
-          <h1>Today's Route</h1>
-          <p>Your assigned machines</p>
+          <h1>{t("Today's Route")}</h1>
+          <p>{t('Your assigned machines')}</p>
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <div className="kpi-card c-red" style={{ flex: 1, minWidth: 110 }}>
           <div className="kpi-val">{overdue}</div>
-          <div className="kpi-lbl">Overdue</div>
+          <div className="kpi-lbl">{t('Overdue')}</div>
         </div>
         <div className="kpi-card c-gold" style={{ flex: 1, minWidth: 110 }}>
           <div className="kpi-val">{dueToday}</div>
-          <div className="kpi-lbl">Due Today</div>
+          <div className="kpi-lbl">{t('Due Today')}</div>
         </div>
         <div className="kpi-card c-green" style={{ flex: 1, minWidth: 110 }}>
           <div className="kpi-val">{notDue}</div>
-          <div className="kpi-lbl">Not Due</div>
+          <div className="kpi-lbl">{t('Not Due')}</div>
         </div>
       </div>
 
       {!sorted.length ? (
         <div className="empty-state">
           <div className="empty-icon">☕</div>
-          <p>No machines assigned to you.</p>
+          <p>{t('No machines assigned to you.')}</p>
         </div>
       ) : (
         sorted.map((m, i) => {
@@ -77,28 +79,28 @@ export default function RoutePage({ onNavigate }) {
                   <span style={{ fontWeight: 400, color: 'var(--text-secondary)', fontSize: 12 }}>{m.machineId}</span>
                 </div>
                 <div className="route-meta">
-                  📍 {m.location} &nbsp;·&nbsp; 🌅 {m.duty || 'Morning'} shift &nbsp;·&nbsp; 🔧 {getUserName(m.technician)}
+                  📍 {m.location} &nbsp;·&nbsp; 🌅 {t(m.duty || 'Morning')} {t('shift')} &nbsp;·&nbsp; 🔧 {getUserName(m.technician)}
                 </div>
                 <div className="stat-row">
-                  <span className={'badge ' + dueBadge(due)}>{due}</span>
-                  <span className={'badge ' + statusBadge(m.status)}>{m.status}</span>
-                  <span className="stat-pill">Last: {formatDate(m.lastService)}</span>
-                  <span className="stat-pill">{m.frequency}</span>
+                  <span className={'badge ' + dueBadge(due)}>{t(due)}</span>
+                  <span className={'badge ' + statusBadge(m.status)}>{t(m.status)}</span>
+                  <span className="stat-pill">{t('Last:')} {formatDate(m.lastService)}</span>
+                  <span className="stat-pill">{t(m.frequency)}</span>
                   {openIssues.length > 0 && (
                     <span className="badge badge-high">
-                      {openIssues.length} open issue{openIssues.length > 1 ? 's' : ''}
+                      {openIssues.length} {t('open issues')}
                     </span>
                   )}
                 </div>
               </div>
               <div className="route-actions">
                 {m.mapsLink && (
-                  <a href={m.mapsLink} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">📍 Maps</a>
+                  <a href={m.mapsLink} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">📍 {t('Maps')}</a>
                 )}
-                <button className="btn btn-teal btn-sm" onClick={() => setServiceId(m.id)}>✓ Service</button>
-                <button className="btn btn-outline btn-sm" onClick={() => setIssueMachineId(m.id)}>⚠ Issue</button>
+                <button className="btn btn-teal btn-sm" onClick={() => setServiceId(m.id)}>✓ {t('Service')}</button>
+                <button className="btn btn-outline btn-sm" onClick={() => setIssueMachineId(m.id)}>⚠ {t('Issue')}</button>
                 {hasPendingEmpty && (
-                  <button className="btn btn-gold btn-sm" onClick={() => onNavigate('empty-checklist')}>🔌 Empty Checklist</button>
+                  <button className="btn btn-gold btn-sm" onClick={() => onNavigate('empty-checklist')}>🔌 {t('Empty Checklist')}</button>
                 )}
               </div>
             </div>

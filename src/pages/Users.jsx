@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import UserModal from '../components/UserModal.jsx'
 
 // Manager-only team management: grouped by role, with add/edit/delete.
 export default function Users() {
   const { users, machines, removeRow, patchRow, showConfirm, showToast } = useApp()
+  const { t } = useT()
   // undefined = closed, null = new member, id = edit
   const [editId, setEditId] = useState(undefined)
 
@@ -16,12 +18,12 @@ export default function Users() {
 
   const handleDelete = async (u) => {
     if (u.id === 'u_manager') {
-      showToast("Primary manager can't be removed", '⚠️')
+      showToast(t("Primary manager can't be removed"), '⚠️')
       return
     }
     const ok = await showConfirm({
       title: 'Remove team member?',
-      message: `This will permanently delete ${u.name} and remove them from all assigned machines. They will no longer be able to log in. This cannot be undone.`,
+      message: `${t('This will permanently delete')} ${u.name} ${t('and remove them from all assigned machines. They will no longer be able to log in. This cannot be undone.')}`,
       confirmText: 'Remove Member',
       tone: 'danger',
     })
@@ -38,18 +40,18 @@ export default function Users() {
       if (isTech) patch.technician = ''
       return patchRow('machines', m.id, patch)
     }).filter(Boolean))
-    showToast('Member removed', '🗑')
+    showToast(t('Member removed'), '🗑')
   }
 
   return (
     <>
       <div className="ph">
         <div className="ph-text">
-          <h1>Team Members</h1>
-          <p>Manage operators, technicians and managers</p>
+          <h1>{t('Team Members')}</h1>
+          <p>{t('Manage operators, technicians and managers')}</p>
         </div>
         <div className="ph-actions">
-          <button className="btn btn-teal" onClick={() => setEditId(null)}>+ Add Member</button>
+          <button className="btn btn-teal" onClick={() => setEditId(null)}>+ {t('Add Member')}</button>
         </div>
       </div>
 
@@ -59,7 +61,7 @@ export default function Users() {
           return (
             <div className="user-card" key={g.role}>
               <div className="user-card-header">
-                <div className="user-card-title">{g.icon} {g.title}</div>
+                <div className="user-card-title">{g.icon} {t(g.title)}</div>
               </div>
               <div className="user-list">
                 {list.length ? list.map((u) => (
@@ -74,15 +76,15 @@ export default function Users() {
                       </div>
                     </div>
                     <div className="action-group">
-                      {u.id === 'u_manager' && <span className="stat-pill">Admin</span>}
-                      <button className="btn btn-outline btn-sm" onClick={() => setEditId(u.id)}>Edit</button>
+                      {u.id === 'u_manager' && <span className="stat-pill">{t('Admin')}</span>}
+                      <button className="btn btn-outline btn-sm" onClick={() => setEditId(u.id)}>{t('Edit')}</button>
                       {u.id !== 'u_manager' && (
-                        <button className="btn btn-danger btn-sm btn-icon" title="Remove" onClick={() => handleDelete(u)}>✕</button>
+                        <button className="btn btn-danger btn-sm btn-icon" title={t('Remove')} onClick={() => handleDelete(u)}>✕</button>
                       )}
                     </div>
                   </div>
                 )) : (
-                  <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>None yet</div>
+                  <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>{t('None yet')}</div>
                 )}
               </div>
             </div>

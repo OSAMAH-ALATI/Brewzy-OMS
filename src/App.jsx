@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp } from './context/AppContext.jsx'
+import { useT } from './lib/i18n.js'
 import Sidebar from './components/Sidebar.jsx'
 import Topbar from './components/Topbar.jsx'
 import Toast from './components/Toast.jsx'
@@ -50,6 +51,7 @@ function Loader({ label }) {
 
 export default function App() {
   const { status, errorMsg, session, access } = useApp()
+  const { t } = useT()
   const role = session?.role
   const [current, setCurrent] = useState('dashboard')
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -60,16 +62,16 @@ export default function App() {
   }, [session?.userId])
 
   if (status === 'unconfigured') return <SetupScreen />
-  if (status === 'connecting') return <Loader label="Connecting to Brewzy cloud…" />
+  if (status === 'connecting') return <Loader label={t('Connecting to Brewzy cloud…')} />
   if (status === 'error') {
     return (
       <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24, background: 'var(--bg)' }}>
         <div className="card" style={{ maxWidth: 460, padding: 28, textAlign: 'center' }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>⚠️</div>
-          <h2 style={{ marginBottom: 8 }}>Couldn’t reach the database</h2>
+          <h2 style={{ marginBottom: 8 }}>{t('Couldn’t reach the database')}</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 12 }}>{errorMsg}</p>
           <p style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>
-            Check that Firestore and Anonymous Authentication are enabled in your Firebase project.
+            {t('Check that Firestore and Anonymous Authentication are enabled in your Firebase project.')}
           </p>
         </div>
       </div>
@@ -93,7 +95,7 @@ export default function App() {
       <div className="app-body">
         <Sidebar current={pageId} onNavigate={setCurrent} mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
         <div className="main">
-          <Topbar current={pageId} onToggleMobile={() => setMobileOpen((v) => !v)} />
+          <Topbar current={pageId} onToggleMobile={() => setMobileOpen((v) => !v)} onNavigate={setCurrent} />
           <div className="page-body">
             <div className="page active">
               <PageComp onNavigate={setCurrent} />

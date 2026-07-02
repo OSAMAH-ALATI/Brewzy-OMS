@@ -15,7 +15,7 @@ import { db, ensureSignedIn, isFirebaseConfigured } from '../lib/firebase'
 import { seedData } from '../lib/seed'
 import { genId, today, yesterday, nowStamp, clone } from '../lib/utils'
 
-const COLLECTIONS = ['users', 'machines', 'issues', 'serviceCycles', 'activityLog', 'emptyRecords']
+const COLLECTIONS = ['users', 'machines', 'issues', 'serviceCycles', 'activityLog', 'emptyRecords', 'notifications']
 const CONFIG_DOC = ['config', 'main']
 
 const AppContext = createContext(null)
@@ -28,7 +28,7 @@ export function AppProvider({ children }) {
 
   // Live data
   const [data, setData] = useState({
-    users: [], machines: [], issues: [], serviceCycles: [], activityLog: [], emptyRecords: [],
+    users: [], machines: [], issues: [], serviceCycles: [], activityLog: [], emptyRecords: [], notifications: [],
   })
   const [config, setConfig] = useState({ globalTasks: [], emptySteps: [], accessControl: null })
 
@@ -126,6 +126,13 @@ export function AppProvider({ children }) {
   const removeRow = useCallback((coll, id) => deleteDoc(doc(db, coll, id)), [])
   const updateConfig = useCallback((patch) => setDoc(doc(db, ...CONFIG_DOC), patch, { merge: true }), [])
 
+  // Notifications
+  const notify = useCallback((userId, text, issueId) => {
+    const id = genId('n_')
+    return setRow('notifications', id, { id, userId, text, issueId: issueId || null, read: false, time: nowStamp() })
+  }, [setRow])
+  const markNotifRead = useCallback((id) => patchRow('notifications', id, { read: true }), [patchRow])
+
   // Activity log (cap at 200 — trim oldest)
   const activityLogRef = useRef([])
   activityLogRef.current = data.activityLog
@@ -180,10 +187,11 @@ export function AppProvider({ children }) {
     toast, showToast,
     confirmState, showConfirm, closeConfirm,
     setRow, patchRow, removeRow, updateConfig, logActivity, genId,
+    notify, markNotifRead,
     getUser, getUserName, getMachine, getMachineName, visitCount,
   }), [status, errorMsg, data, config, access, session, login, logout, theme, toggleTheme,
       toast, showToast, confirmState, showConfirm, closeConfirm, setRow, patchRow, removeRow,
-      updateConfig, logActivity, getUser, getUserName, getMachine, getMachineName, visitCount])
+      updateConfig, logActivity, notify, markNotifRead, getUser, getUserName, getMachine, getMachineName, visitCount])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

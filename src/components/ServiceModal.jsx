@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal.jsx'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import {
   getDueStatus, formatDate, today, nowTime,
   taskDueThisVisit, FREQ_LABEL, FREQ_CLASS,
@@ -12,6 +13,7 @@ export default function ServiceModal({ open, machineId, onClose }) {
     getMachine, visitCount, session,
     setRow, patchRow, genId, logActivity, showToast,
   } = useApp()
+  const { t } = useT()
 
   const machine = machineId ? getMachine(machineId) : null
   const vc = machineId ? visitCount(machineId) : 1
@@ -91,49 +93,49 @@ export default function ServiceModal({ open, machineId, onClose }) {
     }
 
     await logActivity('service', `Service completed: ${machine.name} (${machine.location})`)
-    showToast('Service cycle completed ✓')
+    showToast(t('Service cycle completed') + ' ✓')
     onClose?.()
   }
 
   const footer = (
     <>
-      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-teal" onClick={submit}>✓ Mark Complete</button>
+      <button className="btn btn-outline" onClick={onClose}>{t('Cancel')}</button>
+      <button className="btn btn-teal" onClick={submit}>✓ {t('Mark Complete')}</button>
     </>
   )
 
   return (
-    <Modal open={open} onClose={onClose} title={`Service: ${machine.name}`} large footer={footer}>
+    <Modal open={open} onClose={onClose} title={`${t('Service:')} ${machine.name}`} large footer={footer}>
       <div style={{ background: 'var(--brand-subtle)', borderRadius: 8, padding: 14, marginBottom: 20 }}>
         <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--brand)' }}>
           {machine.name}{' '}
           <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--text-secondary)' }}>{machine.machineId}</span>
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
-          📍 {machine.location} &nbsp;·&nbsp; 🌅 {machine.duty || 'Morning'} &nbsp;·&nbsp; {machine.frequency} &nbsp;·&nbsp; Visit #{vc}
+          📍 {machine.location} &nbsp;·&nbsp; 🌅 {t(machine.duty || 'Morning')} &nbsp;·&nbsp; {t(machine.frequency)} &nbsp;·&nbsp; {t('Visit #')}{vc}
         </div>
         <div style={{ fontSize: 12, marginTop: 2 }}>
-          Last service: {formatDate(machine.lastService)} &nbsp;·&nbsp;{' '}
-          <span style={{ fontWeight: 600, color: dueColor }}>{due}</span>
+          {t('Last service:')} {formatDate(machine.lastService)} &nbsp;·&nbsp;{' '}
+          <span style={{ fontWeight: 600, color: dueColor }}>{t(due)}</span>
         </div>
       </div>
 
       <div className="form-group">
-        <label className="form-label">Service Checklist</label>
+        <label className="form-label">{t('Service Checklist')}</label>
         {visibleTasks.length ? (
-          visibleTasks.map((t) => (
-            <div className="checklist-item" key={t.id}>
+          visibleTasks.map((task) => (
+            <div className="checklist-item" key={task.id}>
               <input
                 type="checkbox"
-                checked={!!checked[t.id]}
-                onChange={(e) => setChecked((c) => ({ ...c, [t.id]: e.target.checked }))}
+                checked={!!checked[task.id]}
+                onChange={(e) => setChecked((c) => ({ ...c, [task.id]: e.target.checked }))}
               />
               <div>
                 <div className="checklist-label">
-                  {t.name}
-                  {(t.freq === 'tech' || t.isTech) && <span className="checklist-tech-badge">TECH</span>}
-                  <span className={'freq-tag ' + (FREQ_CLASS[t.freq] || 'freq-daily')} style={{ marginLeft: 6 }}>
-                    {FREQ_LABEL[t.freq] || t.freq}
+                  {task.name}
+                  {(task.freq === 'tech' || task.isTech) && <span className="checklist-tech-badge">{t('TECH')}</span>}
+                  <span className={'freq-tag ' + (FREQ_CLASS[task.freq] || 'freq-daily')} style={{ marginLeft: 6 }}>
+                    {t(FREQ_LABEL[task.freq] || task.freq)}
                   </span>
                 </div>
               </div>
@@ -141,35 +143,35 @@ export default function ServiceModal({ open, machineId, onClose }) {
           ))
         ) : (
           <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
-            No tasks due for this visit
+            {t('No tasks due for this visit')}
           </div>
         )}
       </div>
 
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Online Check 1 (12PM)</label>
+          <label className="form-label">{t('Online Check 1 (12PM)')}</label>
           <select className="form-control" value={check1} onChange={(e) => setCheck1(e.target.value)}>
-            <option value="All Ok">✅ All Ok</option>
-            <option value="There is a problem">⚠️ There is a problem</option>
+            <option value="All Ok">✅ {t('All Ok')}</option>
+            <option value="There is a problem">⚠️ {t('There is a problem')}</option>
           </select>
         </div>
         <div className="form-group">
-          <label className="form-label">Online Check 2 (12AM)</label>
+          <label className="form-label">{t('Online Check 2 (12AM)')}</label>
           <select className="form-control" value={check2} onChange={(e) => setCheck2(e.target.value)}>
-            <option value="All Ok">✅ All Ok</option>
-            <option value="There is a problem">⚠️ There is a problem</option>
+            <option value="All Ok">✅ {t('All Ok')}</option>
+            <option value="There is a problem">⚠️ {t('There is a problem')}</option>
           </select>
         </div>
       </div>
 
       <div className="form-group">
-        <label className="form-label">Service Notes</label>
-        <textarea className="form-control" placeholder="Any observations..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <label className="form-label">{t('Service Notes')}</label>
+        <textarea className="form-control" placeholder={t('Any observations...')} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
 
       <div className="form-group">
-        <label className="form-label">Flag Technical Issue?</label>
+        <label className="form-label">{t('Flag Technical Issue?')}</label>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <input
             type="checkbox"
@@ -177,7 +179,7 @@ export default function ServiceModal({ open, machineId, onClose }) {
             checked={flag}
             onChange={(e) => setFlag(e.target.checked)}
           />
-          <label style={{ fontSize: 14, color: 'var(--text-primary)' }}>Flag an issue with this machine</label>
+          <label style={{ fontSize: 14, color: 'var(--text-primary)' }}>{t('Flag an issue with this machine')}</label>
         </div>
       </div>
 
@@ -185,18 +187,18 @@ export default function ServiceModal({ open, machineId, onClose }) {
         <div>
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">Severity</label>
+              <label className="form-label">{t('Severity')}</label>
               <select className="form-control" value={severity} onChange={(e) => setSeverity(e.target.value)}>
-                <option>Low</option>
-                <option>Medium</option>
-                <option>High</option>
-                <option>Critical</option>
+                <option value="Low">{t('Low')}</option>
+                <option value="Medium">{t('Medium')}</option>
+                <option value="High">{t('High')}</option>
+                <option value="Critical">{t('Critical')}</option>
               </select>
             </div>
           </div>
           <div className="form-group">
-            <label className="form-label">Issue Description</label>
-            <textarea className="form-control" placeholder="Describe the issue..." value={issueDesc} onChange={(e) => setIssueDesc(e.target.value)} />
+            <label className="form-label">{t('Issue Description')}</label>
+            <textarea className="form-control" placeholder={t('Describe the issue...')} value={issueDesc} onChange={(e) => setIssueDesc(e.target.value)} />
           </div>
         </div>
       )}

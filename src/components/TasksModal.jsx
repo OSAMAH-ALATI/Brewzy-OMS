@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { clone, FREQ_LABEL } from '../lib/utils.js'
 import Modal from './Modal.jsx'
 
@@ -8,6 +9,7 @@ const FREQ_OPTS = ['daily', 'every2', 'every3', 'weekly', 'tech']
 // Edit ONE machine's task list. Works on a local copy; Save persists, Cancel discards.
 export default function TasksModal({ open, machineId, onClose }) {
   const { machines, patchRow, logActivity, showToast, genId } = useApp()
+  const { t: tr } = useT()
   const machine = machines.find((m) => m.id === machineId)
 
   const [tasks, setTasks] = useState([])
@@ -37,7 +39,7 @@ export default function TasksModal({ open, machineId, onClose }) {
   })
   const addTask = () => {
     const n = newName.trim()
-    if (!n) { showToast('Enter a task description first', '⚠️'); return }
+    if (!n) { showToast(tr('Enter a task description first'), '⚠️'); return }
     setTasks((ts) => [...ts, { id: genId('t_'), name: n, freq: newFreq, isTech: newFreq === 'tech' }])
     setNewName('')
   }
@@ -45,32 +47,32 @@ export default function TasksModal({ open, machineId, onClose }) {
   const save = () => {
     patchRow('machines', machine.id, { tasks: clone(tasks) })
     logActivity('service', `Tasks updated: ${machine.name}`)
-    showToast(`Tasks saved for ${machine.name}`)
+    showToast(`${tr('Tasks saved for')} ${machine.name}`)
     onClose?.()
   }
 
   const footer = (
     <>
-      <button className="btn btn-outline" onClick={onClose}>Close</button>
-      <button className="btn btn-teal" onClick={save}>Save Tasks</button>
+      <button className="btn btn-outline" onClick={onClose}>{tr('Close')}</button>
+      <button className="btn btn-teal" onClick={save}>{tr('Save Tasks')}</button>
     </>
   )
 
   return (
-    <Modal open={open} onClose={onClose} large title={`Tasks – ${machine.name}`} footer={footer}>
+    <Modal open={open} onClose={onClose} large title={`${tr('Tasks')} – ${machine.name}`} footer={footer}>
       <div style={{ background: 'var(--brand-subtle)', borderRadius: 8, padding: '12px 14px', marginBottom: 16, fontSize: 12, color: 'var(--brand)' }}>
-        <strong>{machine.name}</strong> · {machine.location} · {machine.frequency || '—'} · {machine.duty || 'Morning'} shift
+        <strong>{machine.name}</strong> · {machine.location} · {machine.frequency ? tr(machine.frequency) : '—'} · {tr(machine.duty || 'Morning')} {tr('shift')}
       </div>
 
       <div>
         {!tasks.length && (
-          <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-tertiary)', fontSize: 13 }}>No tasks yet. Add one below.</div>
+          <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-tertiary)', fontSize: 13 }}>{tr('No tasks yet. Add one below.')}</div>
         )}
         {tasks.map((t, i) => (
           <div key={t.id || i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
-              <button className="btn btn-icon btn-sm" onClick={() => move(i, -1)} disabled={i === 0} title="Move up">↑</button>
-              <button className="btn btn-icon btn-sm" onClick={() => move(i, 1)} disabled={i === tasks.length - 1} title="Move down">↓</button>
+              <button className="btn btn-icon btn-sm" onClick={() => move(i, -1)} disabled={i === 0} title={tr('Move up')}>↑</button>
+              <button className="btn btn-icon btn-sm" onClick={() => move(i, 1)} disabled={i === tasks.length - 1} title={tr('Move down')}>↓</button>
             </div>
             <input
               className="form-control"
@@ -79,23 +81,23 @@ export default function TasksModal({ open, machineId, onClose }) {
               onChange={(e) => setTaskName(i, e.target.value)}
             />
             <select className="form-control" style={{ minWidth: 130, flexShrink: 0 }} value={t.freq} onChange={(e) => setTaskFreq(i, e.target.value)}>
-              {FREQ_OPTS.map((f) => <option key={f} value={f}>{FREQ_LABEL[f]}</option>)}
+              {FREQ_OPTS.map((f) => <option key={f} value={f}>{tr(FREQ_LABEL[f])}</option>)}
             </select>
-            <button className="btn btn-ghost btn-sm" onClick={() => removeTask(i)} title="Remove task" style={{ color: 'var(--red)', flexShrink: 0 }}>🗑</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => removeTask(i)} title={tr('Remove task')} style={{ color: 'var(--red)', flexShrink: 0 }}>🗑</button>
           </div>
         ))}
       </div>
 
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, marginTop: 16 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 10 }}>Add New Task</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 10 }}>{tr('Add New Task')}</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <input className="form-control" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Task description..." onKeyDown={(e) => { if (e.key === 'Enter') addTask() }} />
+            <input className="form-control" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={tr('Task description...')} onKeyDown={(e) => { if (e.key === 'Enter') addTask() }} />
           </div>
           <select className="form-control" style={{ minWidth: 130 }} value={newFreq} onChange={(e) => setNewFreq(e.target.value)}>
-            {FREQ_OPTS.map((f) => <option key={f} value={f}>{FREQ_LABEL[f]}</option>)}
+            {FREQ_OPTS.map((f) => <option key={f} value={f}>{tr(FREQ_LABEL[f])}</option>)}
           </select>
-          <button className="btn btn-teal" onClick={addTask}>+ Add Task</button>
+          <button className="btn btn-teal" onClick={addTask}>+ {tr('Add Task')}</button>
         </div>
       </div>
     </Modal>

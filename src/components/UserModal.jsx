@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal.jsx'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 
 // Add / edit a team member. userId=null => new member.
 export default function UserModal({ open, userId, onClose }) {
   const { users, machines, getUser, setRow, patchRow, showToast, genId } = useApp()
+  const { t } = useT()
 
   const isEdit = !!userId
   const isPrimary = userId === 'u_manager'
@@ -40,17 +42,17 @@ export default function UserModal({ open, userId, onClose }) {
   const save = async () => {
     const nm = name.trim()
     const un = username.trim()
-    if (!nm) { setErr("Please enter the member's full name."); return }
-    if (!un) { setErr('Please set a username.'); return }
-    if (!password) { setErr('Please set a password.'); return }
-    if (password.length < 4) { setErr('Password must be at least 4 characters.'); return }
-    if (isPrimary && role !== 'manager') { setErr('The primary admin account must stay as Manager.'); return }
+    if (!nm) { setErr(t("Please enter the member's full name.")); return }
+    if (!un) { setErr(t('Please set a username.')); return }
+    if (!password) { setErr(t('Please set a password.')); return }
+    if (password.length < 4) { setErr(t('Password must be at least 4 characters.')); return }
+    if (isPrimary && role !== 'manager') { setErr(t('The primary admin account must stay as Manager.')); return }
     const dupe = users.find((u) => u.username?.toLowerCase() === un.toLowerCase() && u.id !== userId)
-    if (dupe) { setErr(`Username "${un}" is already taken. Choose another.`); return }
+    if (dupe) { setErr(`${t('Username')} "${un}" ${t('is already taken. Choose another.')}`); return }
 
     if (isEdit) {
       await patchRow('users', userId, { name: nm, username: un, password, role })
-      showToast('Member updated')
+      showToast(t('Member updated'))
     } else {
       const id = genId('u_')
       await setRow('users', id, { id, name: nm, role, username: un, password })
@@ -67,48 +69,48 @@ export default function UserModal({ open, userId, onClose }) {
           return patchRow('machines', m.id, { technician: id })
         }).filter(Boolean))
       }
-      showToast('Member added — assigned to all machines by default')
+      showToast(t('Member added — assigned to all machines by default'))
     }
     onClose?.()
   }
 
   const footer = (
     <>
-      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-teal" onClick={save}>Save Member</button>
+      <button className="btn btn-outline" onClick={onClose}>{t('Cancel')}</button>
+      <button className="btn btn-teal" onClick={save}>{t('Save Member')}</button>
     </>
   )
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? 'Edit Team Member' : 'Add Team Member'} footer={footer}>
+    <Modal open={open} onClose={onClose} title={isEdit ? t('Edit Team Member') : t('Add Team Member')} footer={footer}>
       <div className={'field-err' + (err ? ' show' : '')}>{err}</div>
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Full Name <span className="req">*</span></label>
-          <input className="form-control" value={name} placeholder="Name" onChange={(e) => setName(e.target.value)} />
+          <label className="form-label">{t('Full Name')} <span className="req">*</span></label>
+          <input className="form-control" value={name} placeholder={t('Name')} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="form-group">
-          <label className="form-label">Role</label>
+          <label className="form-label">{t('Role')}</label>
           <select className="form-control" value={role} disabled={isPrimary} onChange={(e) => setRole(e.target.value)}>
-            <option value="manager">Manager</option>
-            <option value="operator">Operator</option>
-            <option value="technician">Technician</option>
+            <option value="manager">{t('Manager')}</option>
+            <option value="operator">{t('Operator')}</option>
+            <option value="technician">{t('Technician')}</option>
           </select>
         </div>
       </div>
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Username <span className="req">*</span></label>
-          <input className="form-control" value={username} placeholder="e.g. ahmad_op" autoComplete="off" onChange={(e) => setUsername(e.target.value)} />
+          <label className="form-label">{t('Username')} <span className="req">*</span></label>
+          <input className="form-control" value={username} placeholder={t('e.g. ahmad_op')} autoComplete="off" onChange={(e) => setUsername(e.target.value)} />
         </div>
         <div className="form-group">
-          <label className="form-label">Password <span className="req">*</span></label>
+          <label className="form-label">{t('Password')} <span className="req">*</span></label>
           <div className="pw-wrapper">
             <input
               className="form-control"
               type={showPw ? 'text' : 'password'}
               value={password}
-              placeholder="Set password"
+              placeholder={t('Set password')}
               onChange={(e) => setPassword(e.target.value)}
             />
             <button className="pw-toggle" type="button" tabIndex={-1} onClick={() => setShowPw((s) => !s)}>👁</button>

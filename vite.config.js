@@ -5,5 +5,18 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: { port: 5173, host: true },
-  build: { outDir: 'dist', sourcemap: false },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Split heavy vendor libs into their own long-cached chunks so the
+        // app code (which changes often) stays small and re-downloads fast.
+        manualChunks: {
+          firebase: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
+          react: ['react', 'react-dom'],
+        },
+      },
+    },
+  },
 })

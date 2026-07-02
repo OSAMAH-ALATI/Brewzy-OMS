@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal.jsx'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { genId, today, clone } from '../lib/utils.js'
 
 const EMPTY = {
@@ -11,6 +12,7 @@ const EMPTY = {
 
 export default function MachineModal({ open, machineId, onClose }) {
   const { machines, users, globalTasks, getMachine, setRow, patchRow, logActivity, showToast } = useApp()
+  const { t } = useT()
   const isEdit = !!machineId
 
   const [form, setForm] = useState(EMPTY)
@@ -59,6 +61,7 @@ export default function MachineModal({ open, machineId, onClose }) {
       const dup = machines.some((m) => m.machineId === machineCode && m.id !== machineId)
       if (dup) errs.machineId = 'Machine ID must be unique'
     }
+    // errors are English keys; translated at render via t()
     if (Object.keys(errs).length) { setErrors(errs); return }
 
     const fields = {
@@ -72,12 +75,12 @@ export default function MachineModal({ open, machineId, onClose }) {
     if (isEdit) {
       patchRow('machines', machineId, fields)
       logActivity('service', `Machine updated: ${name} (${location})`)
-      showToast('Machine updated')
+      showToast(t('Machine updated'))
     } else {
       const id = genId('m_')
       setRow('machines', id, { id, ...fields, tasks: clone(globalTasks || []) })
       logActivity('service', `Machine added: ${name} (${location})`)
-      showToast('Machine added')
+      showToast(t('Machine added'))
     }
     onClose?.()
   }
@@ -87,90 +90,90 @@ export default function MachineModal({ open, machineId, onClose }) {
       open={open}
       onClose={onClose}
       large
-      title={isEdit ? 'Edit Machine' : 'Add Machine'}
+      title={isEdit ? t('Edit Machine') : t('Add Machine')}
       footer={(
         <>
-          <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-          <button className="btn btn-teal" onClick={save}>Save Machine</button>
+          <button className="btn btn-outline" onClick={onClose}>{t('Cancel')}</button>
+          <button className="btn btn-teal" onClick={save}>{t('Save Machine')}</button>
         </>
       )}
     >
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Machine Name <span className="req">*</span></label>
+          <label className="form-label">{t('Machine Name')} <span className="req">*</span></label>
           <input
             className={'form-control' + (errors.name ? ' error' : '')}
-            placeholder="e.g. Al Matarat"
+            placeholder={t('e.g. Al Matarat')}
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
           />
-          <div className={'field-err' + (errors.name ? ' show' : '')}>{errors.name}</div>
+          <div className={'field-err' + (errors.name ? ' show' : '')}>{t(errors.name)}</div>
         </div>
         <div className="form-group">
-          <label className="form-label">Machine ID <span className="req">*</span></label>
+          <label className="form-label">{t('Machine ID')} <span className="req">*</span></label>
           <input
             className={'form-control' + (errors.machineId ? ' error' : '')}
-            placeholder="e.g. M001"
+            placeholder={t('e.g. M001')}
             value={form.machineId}
             onChange={(e) => set('machineId', e.target.value)}
           />
-          <div className={'field-err' + (errors.machineId ? ' show' : '')}>{errors.machineId}</div>
+          <div className={'field-err' + (errors.machineId ? ' show' : '')}>{t(errors.machineId)}</div>
         </div>
       </div>
 
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Order Number</label>
-          <input className="form-control" placeholder="e.g. ORD-001" value={form.orderNumber} onChange={(e) => set('orderNumber', e.target.value)} />
+          <label className="form-label">{t('Order Number')}</label>
+          <input className="form-control" placeholder={t('e.g. ORD-001')} value={form.orderNumber} onChange={(e) => set('orderNumber', e.target.value)} />
         </div>
         <div className="form-group">
-          <label className="form-label">Location / Place Name <span className="req">*</span></label>
+          <label className="form-label">{t('Location / Place Name')} <span className="req">*</span></label>
           <input
             className={'form-control' + (errors.location ? ' error' : '')}
-            placeholder="e.g. Al Matarat"
+            placeholder={t('e.g. Al Matarat')}
             value={form.location}
             onChange={(e) => set('location', e.target.value)}
           />
-          <div className={'field-err' + (errors.location ? ' show' : '')}>{errors.location}</div>
+          <div className={'field-err' + (errors.location ? ' show' : '')}>{t(errors.location)}</div>
         </div>
       </div>
 
       <div className="form-group">
-        <label className="form-label">Maps Link <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(optional)</span></label>
+        <label className="form-label">{t('Maps Link')} <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>{t('(optional)')}</span></label>
         <input className="form-control" placeholder="https://maps.app.goo.gl/..." value={form.mapsLink} onChange={(e) => set('mapsLink', e.target.value)} />
       </div>
 
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Operation Duty</label>
+          <label className="form-label">{t('Operation Duty')}</label>
           <select className="form-control" value={form.duty} onChange={(e) => set('duty', e.target.value)}>
-            <option>Morning</option><option>Evening</option><option>Both</option>
+            <option value="Morning">{t('Morning')}</option><option value="Evening">{t('Evening')}</option><option value="Both">{t('Both')}</option>
           </select>
         </div>
         <div className="form-group">
-          <label className="form-label">Service Frequency</label>
+          <label className="form-label">{t('Service Frequency')}</label>
           <select className="form-control" value={form.frequency} onChange={(e) => set('frequency', e.target.value)}>
-            <option>Daily</option><option>Every 2 Days</option><option>Every 3 Days</option>
+            <option value="Daily">{t('Daily')}</option><option value="Every 2 Days">{t('Every 2 Days')}</option><option value="Every 3 Days">{t('Every 3 Days')}</option>
           </select>
         </div>
       </div>
 
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Machine Status</label>
+          <label className="form-label">{t('Machine Status')}</label>
           <select className="form-control" value={form.status} onChange={(e) => set('status', e.target.value)}>
-            <option>Active</option><option>Inactive</option><option>Maintenance</option><option>Out of Service</option>
+            <option value="Active">{t('Active')}</option><option value="Inactive">{t('Inactive')}</option><option value="Maintenance">{t('Maintenance')}</option><option value="Out of Service">{t('Out of Service')}</option>
           </select>
         </div>
         <div className="form-group">
-          <label className="form-label">Last Service Date</label>
+          <label className="form-label">{t('Last Service Date')}</label>
           <input className="form-control" type="date" value={form.lastService} onChange={(e) => set('lastService', e.target.value)} />
         </div>
       </div>
 
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Assign Operator(s)</label>
+          <label className="form-label">{t('Assign Operator(s)')}</label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4, maxHeight: 150, overflowY: 'auto', padding: 8, background: 'var(--bg)', borderRadius: 8, border: '1.5px solid var(--border)' }}>
             {operatorUsers.length ? operatorUsers.map((u) => (
               <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '6px 8px', borderRadius: 6 }}>
@@ -183,21 +186,21 @@ export default function MachineModal({ open, machineId, onClose }) {
                 <span style={{ fontSize: 13, fontWeight: 500 }}>{u.name}</span>
                 <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>@{u.username}</span>
               </label>
-            )) : <div style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: 8 }}>No operators added yet</div>}
+            )) : <div style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: 8 }}>{t('No operators added yet')}</div>}
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Assign Technician</label>
+          <label className="form-label">{t('Assign Technician')}</label>
           <select className="form-control" value={form.technician} onChange={(e) => set('technician', e.target.value)}>
-            <option value="">None</option>
+            <option value="">{t('None')}</option>
             {technicianUsers.map((u) => <option key={u.id} value={u.id}>{u.name} (@{u.username})</option>)}
           </select>
         </div>
       </div>
 
       <div className="form-group">
-        <label className="form-label">Notes</label>
-        <textarea className="form-control" placeholder="Any notes..." value={form.notes} onChange={(e) => set('notes', e.target.value)} />
+        <label className="form-label">{t('Notes')}</label>
+        <textarea className="form-control" placeholder={t('Any notes...')} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
       </div>
     </Modal>
   )

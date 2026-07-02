@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { MANAGER_DEPTS, WORKER_ITEMS } from '../lib/nav.js'
 
-function NavItem({ item, current, badge, onNavigate }) {
+function NavItem({ item, current, badge, onNavigate, t }) {
   return (
     <div className={'sb-item' + (current === item.id ? ' active' : '')}
       onClick={() => onNavigate(item.id)}>
       <span className="sb-ico">{item.icon}</span>
-      <span className="sb-lbl">{item.label}</span>
+      <span className="sb-lbl">{t(item.label)}</span>
       {badge > 0 && <span className="sb-badge">{badge}</span>}
     </div>
   )
@@ -15,6 +16,7 @@ function NavItem({ item, current, badge, onNavigate }) {
 
 export default function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile }) {
   const { session, logout, issues, access } = useApp()
+  const { t } = useT()
   const role = session?.role
   const initials = (session?.name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 
@@ -49,7 +51,7 @@ export default function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile
         <div className="sb-avatar">{initials}</div>
         <div>
           <div className="sb-uname">{session?.name}</div>
-          <div className="sb-urole">{role}</div>
+          <div className="sb-urole">{t(role)}</div>
         </div>
       </div>
 
@@ -59,13 +61,13 @@ export default function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile
             <div key={dept.id}>
               <div className="sb-dept-hdr" onClick={() => toggleDept(dept.id)}>
                 <span className="sb-ico">{dept.icon}</span>
-                <span className="sb-dept-label">{dept.label}</span>
+                <span className="sb-dept-label">{t(dept.label)}</span>
                 <span className={'sb-chevron' + (openDepts[dept.id] ? ' open' : '')}>›</span>
               </div>
               {openDepts[dept.id] && (
                 <div className="sb-dept-items">
                   {dept.items.map((item) => (
-                    <NavItem key={item.id} item={item} current={current} badge={badgeFor(item.id)} onNavigate={go} />
+                    <NavItem key={item.id} item={item} current={current} badge={badgeFor(item.id)} onNavigate={go} t={t} />
                   ))}
                 </div>
               )}
@@ -73,9 +75,9 @@ export default function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile
           ))
         ) : (
           <>
-            <div className="sb-section">Your Work</div>
+            <div className="sb-section">{t('Your Work')}</div>
             {WORKER_ITEMS.filter((it) => access?.[role]?.[it.access]).map((item) => (
-              <NavItem key={item.id} item={item} current={current} badge={badgeFor(item.id)} onNavigate={go} />
+              <NavItem key={item.id} item={item} current={current} badge={badgeFor(item.id)} onNavigate={go} t={t} />
             ))}
           </>
         )}
@@ -83,7 +85,7 @@ export default function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile
 
       <div className="sb-ft">
         <button className="sb-logout-btn" onClick={logout}>
-          <span className="sb-ico">←</span> Sign Out
+          <span className="sb-ico">←</span> {t('Sign Out')}
         </button>
       </div>
     </nav>

@@ -1,4 +1,5 @@
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 
 // Manager-only page-access control for operators and technicians.
 const ROLES = [
@@ -15,6 +16,7 @@ const FEATURES = [
 
 export default function Access() {
   const { access, updateConfig, showToast } = useApp()
+  const { t } = useT()
 
   const toggle = (role, feature, val) => {
     updateConfig({
@@ -23,15 +25,15 @@ export default function Access() {
         [role]: { ...access[role], [feature]: val },
       },
     })
-    showToast(`${role} access to "${feature}" ${val ? 'enabled' : 'disabled'}`)
+    showToast(`${t(role)} ${t('access to')} "${feature}" ${val ? t('enabled') : t('disabled')}`)
   }
 
   return (
     <>
       <div className="ph">
         <div className="ph-text">
-          <h1>Access Control</h1>
-          <p>Choose which pages operators and technicians can see</p>
+          <h1>{t('Access Control')}</h1>
+          <p>{t('Choose which pages operators and technicians can see')}</p>
         </div>
       </div>
 
@@ -39,7 +41,7 @@ export default function Access() {
         {ROLES.map((role) => (
           <div className="card" style={{ marginBottom: 0 }} key={role.id}>
             <div className="card-header" style={{ padding: '16px 20px' }}>
-              <div className="card-title">{role.label}</div>
+              <div className="card-title">{t(role.label)}</div>
             </div>
             <div style={{ padding: '8px 20px 16px' }}>
               {FEATURES.map((f) => (
@@ -48,8 +50,8 @@ export default function Access() {
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' }}
                 >
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{f.icon} {f.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{f.desc}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{f.icon} {t(f.label)}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{t(f.desc)}</div>
                   </div>
                   <label className="toggle-wrap">
                     <input

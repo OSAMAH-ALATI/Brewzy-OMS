@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal.jsx'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { genId, today, nowStamp } from '../lib/utils.js'
 
 const REASONS = [
@@ -15,6 +16,7 @@ const REASONS = [
 // Manager assigns an emptying task: creates one emptyRecord per selected assignee.
 export default function AssignEmptyModal({ open, onClose }) {
   const { machines, users, session, setRow, genId: ctxGenId, logActivity, showToast, getMachineName, getUserName } = useApp()
+  const { t } = useT()
   const mkId = ctxGenId || genId
 
   const [machineId, setMachineId] = useState('')
@@ -42,10 +44,10 @@ export default function AssignEmptyModal({ open, onClose }) {
   const toggle = (id) => setAssignees((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]))
 
   const save = () => {
-    if (!machineId) { showToast('Select a machine', '⚠️'); return }
-    if (!date) { showToast('Set a date', '⚠️'); return }
-    if (!reason) { showToast('Select a reason', '⚠️'); return }
-    if (!assignees.length) { showToast('Select at least one person to assign', '⚠️'); return }
+    if (!machineId) { showToast(t('Select a machine'), '⚠️'); return }
+    if (!date) { showToast(t('Set a date'), '⚠️'); return }
+    if (!reason) { showToast(t('Select a reason'), '⚠️'); return }
+    if (!assignees.length) { showToast(t('Select at least one person to assign'), '⚠️'); return }
 
     assignees.forEach((uid) => {
       const id = mkId('er_')
@@ -66,7 +68,7 @@ export default function AssignEmptyModal({ open, onClose }) {
 
     const names = assignees.map((id) => getUserName(id)).join(', ')
     logActivity('service', `Emptying assigned: ${getMachineName(machineId)}`)
-    showToast(`✓ Assigned to ${names}`)
+    showToast(`✓ ${t('Assigned to')} ${names}`)
     onClose?.()
   }
 
@@ -74,31 +76,31 @@ export default function AssignEmptyModal({ open, onClose }) {
     <Modal
       open={open}
       onClose={onClose}
-      title="📋 Assign Emptying Task"
+      title={`📋 ${t('Assign Emptying Task')}`}
       footer={(
         <>
-          <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-          <button className="btn btn-teal" onClick={save}>✓ Assign Task</button>
+          <button className="btn btn-outline" onClick={onClose}>{t('Cancel')}</button>
+          <button className="btn btn-teal" onClick={save}>✓ {t('Assign Task')}</button>
         </>
       )}
     >
       <div className="form-group">
-        <label className="form-label">Machine to Empty <span className="req">*</span></label>
+        <label className="form-label">{t('Machine to Empty')} <span className="req">*</span></label>
         <select className="form-control" value={machineId} onChange={(e) => { setMachineId(e.target.value); setAssignees([]) }}>
-          <option value="">Select machine...</option>
+          <option value="">{t('Select machine...')}</option>
           {machines.map((m) => <option key={m.id} value={m.id}>{m.name} – {m.location}</option>)}
         </select>
       </div>
 
       <div className="form-group">
         <label className="form-label">
-          Assign To <span className="req">*</span>{' '}
-          <span style={{ fontWeight: 400, fontStyle: 'italic', color: 'var(--text-tertiary)', textTransform: 'none', letterSpacing: 0 }}>— select one or more</span>
+          {t('Assign To')} <span className="req">*</span>{' '}
+          <span style={{ fontWeight: 400, fontStyle: 'italic', color: 'var(--text-tertiary)', textTransform: 'none', letterSpacing: 0 }}>{t('— select one or more')}</span>
         </label>
         {!machineId ? (
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8 }}>Select a machine first</div>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8 }}>{t('Select a machine first')}</div>
         ) : (operators.length + technicians.length) === 0 ? (
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8 }}>No operators or technicians in the system yet</div>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8 }}>{t('No operators or technicians in the system yet')}</div>
         ) : (
           <div className="assign-pills">
             {operators.map((u) => (
@@ -121,26 +123,26 @@ export default function AssignEmptyModal({ open, onClose }) {
 
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Date <span className="req">*</span></label>
+          <label className="form-label">{t('Date')} <span className="req">*</span></label>
           <input className="form-control" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
         <div className="form-group">
-          <label className="form-label">Reason <span className="req">*</span></label>
+          <label className="form-label">{t('Reason')} <span className="req">*</span></label>
           <select className="form-control" value={reason} onChange={(e) => setReason(e.target.value)}>
-            <option value="">Select reason...</option>
-            {REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+            <option value="">{t('Select reason...')}</option>
+            {REASONS.map((r) => <option key={r} value={r}>{t(r)}</option>)}
           </select>
         </div>
       </div>
 
       <div className="form-group">
-        <label className="form-label">New Location <span style={{ fontWeight: 400, color: 'var(--text-tertiary)' }}>(if relocating)</span></label>
-        <input className="form-control" placeholder="e.g. King Fahd Road" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} />
+        <label className="form-label">{t('New Location')} <span style={{ fontWeight: 400, color: 'var(--text-tertiary)' }}>{t('(if relocating)')}</span></label>
+        <input className="form-control" placeholder={t('e.g. King Fahd Road')} value={newLocation} onChange={(e) => setNewLocation(e.target.value)} />
       </div>
 
       <div className="form-group">
-        <label className="form-label">Notes</label>
-        <textarea className="form-control" placeholder="Any instructions for the assignees..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <label className="form-label">{t('Notes')}</label>
+        <textarea className="form-control" placeholder={t('Any instructions for the assignees...')} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
     </Modal>
   )

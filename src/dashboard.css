@@ -1,0 +1,38 @@
+/* ── Dashboard upgrades (scoped; base design system untouched) ── */
+
+/* Bar hover affordance */
+.bar-row .bar-fill { transition: filter var(--dur) var(--ease); }
+.bar-row:hover .bar-fill { filter: brightness(1.06); }
+.bar-track { position: relative; }
+
+/* 7-day trend chart */
+.trend-wrap { padding: 4px 4px 0; }
+.trend-svg { width: 100%; height: 160px; display: block; overflow: visible; }
+.trend-grid line { stroke: var(--border-subtle); stroke-width: 1; }
+.trend-area { fill: var(--brand); opacity: .12; }
+.trend-line { fill: none; stroke: var(--brand); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.trend-dot { fill: var(--surface); stroke: var(--brand); stroke-width: 2; transition: r var(--dur-fast) var(--ease); }
+.trend-dot:hover { r: 6; }
+.trend-xlabel { fill: var(--text-tertiary); font-size: 10px; font-weight: 600; text-anchor: middle; }
+.trend-vlabel { fill: var(--text-secondary); font-size: 10px; font-weight: 800; text-anchor: middle; }
+.trend-empty { fill: var(--text-tertiary); font-size: 12px; text-anchor: middle; }
+
+/* Small legend chip */
+.chart-legend { display: flex; gap: 14px; margin: 2px 0 10px; flex-wrap: wrap; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* Health strip */
+.health-bar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; background: var(--surface-sunken); margin: 6px 0 10px; }
+.health-seg { height: 100%; }
+.health-seg + .health-seg { box-shadow: -1px 0 0 var(--surface); }
+
+/* Print report */
+@media print {
+  .sidebar, .topbar, .overlay-bg, .ph-actions, .activity-del, .btn { display: none !important; }
+  .main { margin-left: 0 !important; }
+  body { background: #fff !important; }
+  .page-body { padding: 0 !important; }
+  .kpi-card, .chart-card, .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+  .two-col { display: grid !important; grid-template-columns: 1fr 1fr !important; }
+}

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { genId } from '../lib/utils.js'
 import AssignEmptyModal from '../components/AssignEmptyModal.jsx'
 
 // Manager-only: configure the ordered list of machine-emptying protocol steps.
 export default function EmptyProtocol({ onNavigate }) {
   const { emptySteps, updateConfig, showToast, showConfirm } = useApp()
+  const { t } = useT()
   const steps = emptySteps || []
 
   const [newStep, setNewStep] = useState('')
@@ -17,7 +19,7 @@ export default function EmptyProtocol({ onNavigate }) {
 
   const addStep = () => {
     const val = newStep.trim()
-    if (!val) { showToast('Enter a step description', '⚠️'); return }
+    if (!val) { showToast(t('Enter a step description'), '⚠️'); return }
     persist([...steps, { id: genId('es_'), text: val }])
     setNewStep('')
   }
@@ -26,7 +28,7 @@ export default function EmptyProtocol({ onNavigate }) {
   const cancelEdit = () => { setEditIdx(null); setEditText('') }
   const confirmEdit = (i) => {
     const val = editText.trim()
-    if (!val) { showToast('Step cannot be empty', '⚠️'); return }
+    if (!val) { showToast(t('Step cannot be empty'), '⚠️'); return }
     const arr = steps.map((s, idx) => (idx === i ? { ...s, text: val } : s))
     persist(arr)
     cancelEdit()
@@ -56,22 +58,22 @@ export default function EmptyProtocol({ onNavigate }) {
     <>
       <div className="ph">
         <div className="ph-text">
-          <h1>Machine Emptying Protocol</h1>
-          <p>Define the steps a worker must complete before a machine can be moved.</p>
+          <h1>{t('Machine Emptying Protocol')}</h1>
+          <p>{t('Define the steps a worker must complete before a machine can be moved.')}</p>
         </div>
         <div className="ph-actions">
-          <button className="btn btn-brand" onClick={() => setAssignOpen(true)}>📋 Assign to Operator</button>
+          <button className="btn btn-brand" onClick={() => setAssignOpen(true)}>📋 {t('Assign to Operator')}</button>
         </div>
       </div>
 
       <div className="card">
         <div className="card-header">
-          <div className="card-title">Protocol Steps</div>
+          <div className="card-title">{t('Protocol Steps')}</div>
         </div>
 
         {steps.length === 0 ? (
           <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
-            No steps yet. Add one below.
+            {t('No steps yet. Add one below.')}
           </div>
         ) : (
           <div>
@@ -102,10 +104,10 @@ export default function EmptyProtocol({ onNavigate }) {
                   <>
                     <div style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--text-primary)' }}>{s.text}</div>
                     <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                      <button className="btn btn-icon btn-sm" title="Move up" disabled={i === 0} onClick={() => move(i, -1)}>↑</button>
-                      <button className="btn btn-icon btn-sm" title="Move down" disabled={i === steps.length - 1} onClick={() => move(i, 1)}>↓</button>
-                      <button className="btn btn-ghost btn-sm" title="Edit" style={{ color: 'var(--brand)' }} onClick={() => startEdit(i)}>✏</button>
-                      <button className="btn btn-ghost btn-sm" title="Delete" style={{ color: 'var(--error)' }} onClick={() => deleteStep(i)}>🗑</button>
+                      <button className="btn btn-icon btn-sm" title={t('Move up')} disabled={i === 0} onClick={() => move(i, -1)}>↑</button>
+                      <button className="btn btn-icon btn-sm" title={t('Move down')} disabled={i === steps.length - 1} onClick={() => move(i, 1)}>↓</button>
+                      <button className="btn btn-ghost btn-sm" title={t('Edit')} style={{ color: 'var(--brand)' }} onClick={() => startEdit(i)}>✏</button>
+                      <button className="btn btn-ghost btn-sm" title={t('Delete')} style={{ color: 'var(--error)' }} onClick={() => deleteStep(i)}>🗑</button>
                     </div>
                   </>
                 )}
@@ -117,17 +119,17 @@ export default function EmptyProtocol({ onNavigate }) {
         <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
           <input
             className="form-control"
-            placeholder="Type a new step and press Enter…"
+            placeholder={t('Type a new step and press Enter…')}
             value={newStep}
             onChange={(e) => setNewStep(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') addStep() }}
             style={{ flex: 1 }}
           />
-          <button className="btn btn-teal" onClick={addStep}>+ Add Step</button>
+          <button className="btn btn-teal" onClick={addStep}>+ {t('Add Step')}</button>
         </div>
 
         <div style={{ background: 'var(--brand-subtle)', borderRadius: 8, padding: '12px 14px', fontSize: 12, color: 'var(--brand)', marginTop: 16 }}>
-          All steps above must be completed before a machine can be moved.
+          {t('All steps above must be completed before a machine can be moved.')}
         </div>
       </div>
 

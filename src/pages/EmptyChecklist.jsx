@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { formatDate, nowStamp } from '../lib/utils.js'
 
 // Worker side: complete the emptying protocol for a machine assigned to you.
@@ -8,6 +9,7 @@ export default function EmptyChecklist({ onNavigate }) {
     emptyRecords, emptySteps, machines, session,
     getMachine, getMachineName, patchRow, logActivity, showToast,
   } = useApp()
+  const { t } = useT()
 
   const steps = emptySteps || []
   const [selectedId, setSelectedId] = useState(null)
@@ -35,14 +37,14 @@ export default function EmptyChecklist({ onNavigate }) {
       <>
         <div className="ph">
           <div className="ph-text">
-            <h1>Empty Checklist</h1>
-            <p>Complete the emptying protocol before moving a machine.</p>
+            <h1>{t('Empty Checklist')}</h1>
+            <p>{t('Complete the emptying protocol before moving a machine.')}</p>
           </div>
         </div>
         <div className="card">
           <div className="empty-state">
             <div className="empty-icon">🔌</div>
-            <p>No pending machine emptying tasks assigned to you.</p>
+            <p>{t('No pending machine emptying tasks assigned to you.')}</p>
           </div>
         </div>
       </>
@@ -68,7 +70,7 @@ export default function EmptyChecklist({ onNavigate }) {
       completedAt: nowStamp(),
     })
     logActivity('service', `Machine emptied: ${getMachineName(active.machineId)}`)
-    showToast('✅ Machine emptying recorded!')
+    showToast('✅ ' + t('Machine emptying recorded!'))
     setSelectedId(null)
   }
 
@@ -76,14 +78,14 @@ export default function EmptyChecklist({ onNavigate }) {
     <>
       <div className="ph">
         <div className="ph-text">
-          <h1>Empty Checklist</h1>
-          <p>Complete every step before moving the machine.</p>
+          <h1>{t('Empty Checklist')}</h1>
+          <p>{t('Complete every step before moving the machine.')}</p>
         </div>
       </div>
 
       {pending.length > 1 && (
         <div className="card" style={{ marginBottom: 16, padding: '16px 20px' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>Select task to complete:</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 10 }}>{t('Select task to complete:')}</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {pending.map((r) => (
               <button
@@ -101,19 +103,19 @@ export default function EmptyChecklist({ onNavigate }) {
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 17, fontWeight: 900, color: '#fff', lineHeight: 1.2 }}>{m?.name || '—'}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', marginTop: 5 }}>📍 {m?.location || '—'} &middot; 📅 {formatDate(active.date)}</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,.85)', marginTop: 4, fontWeight: 700 }}>Reason: {active.reason}</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,.85)', marginTop: 4, fontWeight: 700 }}>{t('Reason:')} {t(active.reason)}</div>
         </div>
       </div>
 
       <div className="card">
         <div className="card-header">
-          <div className="card-title">Protocol Steps</div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{doneCount} / {steps.length} steps completed</div>
+          <div className="card-title">{t('Protocol Steps')}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{doneCount} / {steps.length} {t('steps completed')}</div>
         </div>
 
         {steps.length === 0 ? (
           <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
-            No protocol steps configured yet.
+            {t('No protocol steps configured yet.')}
           </div>
         ) : (
           steps.map((s, i) => {
@@ -139,9 +141,9 @@ export default function EmptyChecklist({ onNavigate }) {
         {allDone && (
           <div style={{ marginTop: 18 }}>
             <div style={{ background: 'var(--success-subtle)', color: 'var(--success)', borderRadius: 10, padding: '14px 16px', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
-              ✅ All steps complete — you can now record this machine as emptied.
+              ✅ {t('All steps complete — you can now record this machine as emptied.')}
             </div>
-            <button className="btn btn-teal" onClick={submit}>Submit &amp; Record Completion</button>
+            <button className="btn btn-teal" onClick={submit}>{t('Submit & Record Completion')}</button>
           </div>
         )}
       </div>

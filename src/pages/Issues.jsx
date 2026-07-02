@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { formatDate } from '../lib/utils.js'
 import IssueModal from '../components/IssueModal.jsx'
 import IssueDetailModal from '../components/IssueDetailModal.jsx'
+import '../features.css'
 
 const sevBdg = (s) => s === 'Critical' ? 'badge-critical' : s === 'High' ? 'badge-high' : s === 'Medium' ? 'badge-medium' : 'badge-low'
 const stBdg = (s) => s === 'Open' ? 'badge-open' : s === 'In Progress' ? 'badge-inprogress' : 'badge-resolved'
@@ -12,6 +14,7 @@ export default function Issues({ onNavigate }) {
     issues, users, session, getMachine, getMachineName, getUserName,
     patchRow, logActivity, showToast,
   } = useApp()
+  const { t } = useT()
   const userId = session?.userId
 
   const [fStatus, setFStatus] = useState('')
@@ -45,29 +48,29 @@ export default function Issues({ onNavigate }) {
     users.forEach((u) => { if (!seenBy.includes(u.id)) seenBy.push(u.id) })
     await patchRow('issues', id, { status: 'Resolved', seenBy })
     logActivity('issue-update', `Issue resolved: ${getMachineName(i.machineId)}`)
-    showToast('Issue resolved ✓')
+    showToast(t('Issue resolved') + ' ✓')
   }
 
   return (
     <>
       <div className="ph">
         <div className="ph-text">
-          <h1>Issues</h1>
-          <p>Track and resolve machine issues</p>
+          <h1>{t('Issues')}</h1>
+          <p>{t('Track and resolve machine issues')}</p>
         </div>
         <div className="ph-actions">
-          <button className="btn btn-teal" onClick={() => setEditId(null)}>+ Report Issue</button>
+          <button className="btn btn-teal" onClick={() => setEditId(null)}>+ {t('Report Issue')}</button>
         </div>
       </div>
 
       <div className="filter-bar">
         <select className="filter-select" value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
-          <option value="">All Status</option>
-          <option>Open</option><option>In Progress</option><option>Resolved</option>
+          <option value="">{t('All Status')}</option>
+          <option value="Open">{t('Open')}</option><option value="In Progress">{t('In Progress')}</option><option value="Resolved">{t('Resolved')}</option>
         </select>
         <select className="filter-select" value={fSev} onChange={(e) => setFSev(e.target.value)}>
-          <option value="">All Severity</option>
-          <option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+          <option value="">{t('All Severity')}</option>
+          <option value="Low">{t('Low')}</option><option value="Medium">{t('Medium')}</option><option value="High">{t('High')}</option><option value="Critical">{t('Critical')}</option>
         </select>
       </div>
 
@@ -75,8 +78,8 @@ export default function Issues({ onNavigate }) {
         <table>
           <thead>
             <tr>
-              <th>Machine</th><th>Description</th><th>Severity</th><th>Status</th>
-              <th>Assigned To</th><th>Reported By</th><th>Date</th><th>Actions</th>
+              <th>{t('Machine')}</th><th>{t('Description')}</th><th>{t('Severity')}</th><th>{t('Status')}</th>
+              <th>{t('Assigned To')}</th><th>{t('Reported By')}</th><th>{t('Date')}</th><th>{t('Actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -91,25 +94,26 @@ export default function Issues({ onNavigate }) {
                   </td>
                   <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {isNew && <span className="issue-new-dot" />} {i.description}
+                    {(i.photos || []).length ? <span className="photo-badge">📷 {i.photos.length}</span> : null}
                   </td>
-                  <td><span className={'badge ' + sevBdg(i.severity)}>{i.severity}</span></td>
-                  <td><span className={'badge ' + stBdg(i.status)}>{i.status}</span></td>
+                  <td><span className={'badge ' + sevBdg(i.severity)}>{t(i.severity)}</span></td>
+                  <td><span className={'badge ' + stBdg(i.status)}>{t(i.status)}</span></td>
                   <td style={{ fontSize: 12 }}>{assignedNames}</td>
                   <td style={{ fontSize: 12 }}>{getUserName(i.reportedBy)}</td>
                   <td style={{ fontSize: 12 }}>{formatDate(i.dateReported)}</td>
                   <td className="actions-cell">
                     <div className="action-group">
-                      <button className="btn btn-outline btn-sm" onClick={() => setViewId(i.id)}>View</button>
-                      <button className="btn btn-outline btn-sm" onClick={() => setEditId(i.id)}>Edit</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => setViewId(i.id)}>{t('View')}</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => setEditId(i.id)}>{t('Edit')}</button>
                       {i.status !== 'Resolved' && (
-                        <button className="btn btn-teal btn-sm" onClick={() => resolveIssue(i.id)}>✓ Resolve</button>
+                        <button className="btn btn-teal btn-sm" onClick={() => resolveIssue(i.id)}>✓ {t('Resolve')}</button>
                       )}
                     </div>
                   </td>
                 </tr>
               )
             }) : (
-              <tr><td colSpan={8}><div className="empty-state"><p>No issues found 👍</p></div></td></tr>
+              <tr><td colSpan={8}><div className="empty-state"><p>{t('No issues found')} 👍</p></div></td></tr>
             )}
           </tbody>
         </table>

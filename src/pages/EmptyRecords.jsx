@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { formatDate } from '../lib/utils.js'
 import EmptyRecordModal from '../components/EmptyRecordModal.jsx'
 
 // Manager: list of all machine-emptying records, newest first.
 export default function EmptyRecords({ onNavigate }) {
   const { emptyRecords, getMachine, getMachineName, getUserName } = useApp()
+  const { t } = useT()
   const [modalOpen, setModalOpen] = useState(false)
 
   const rows = [...(emptyRecords || [])].sort((a, b) => {
@@ -18,11 +20,11 @@ export default function EmptyRecords({ onNavigate }) {
     <>
       <div className="ph">
         <div className="ph-text">
-          <h1>Empty Records</h1>
-          <p>History of machines emptied or scheduled for emptying.</p>
+          <h1>{t('Empty Records')}</h1>
+          <p>{t('History of machines emptied or scheduled for emptying.')}</p>
         </div>
         <div className="ph-actions">
-          <button className="btn btn-brand" onClick={() => setModalOpen(true)}>+ New Record</button>
+          <button className="btn btn-brand" onClick={() => setModalOpen(true)}>+ {t('New Record')}</button>
         </div>
       </div>
 
@@ -31,12 +33,12 @@ export default function EmptyRecords({ onNavigate }) {
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Machine</th>
-                <th>Reason</th>
-                <th>Assigned To / Done By</th>
-                <th>Notes</th>
-                <th>Status</th>
+                <th>{t('Date')}</th>
+                <th>{t('Machine')}</th>
+                <th>{t('Reason')}</th>
+                <th>{t('Assigned To / Done By')}</th>
+                <th>{t('Notes')}</th>
+                <th>{t('Status')}</th>
               </tr>
             </thead>
             <tbody>
@@ -45,7 +47,7 @@ export default function EmptyRecords({ onNavigate }) {
                   <td colSpan={6}>
                     <div className="empty-state">
                       <div className="empty-icon">🔌</div>
-                      <p>No empty records yet</p>
+                      <p>{t('No empty records yet')}</p>
                     </div>
                   </td>
                 </tr>
@@ -59,14 +61,14 @@ export default function EmptyRecords({ onNavigate }) {
                       <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{m?.location || ''}</div>
                     </td>
                     <td style={{ maxWidth: 160 }}>
-                      {r.reason}
+                      {t(r.reason)}
                       {r.newLocation ? <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>→ {r.newLocation}</div> : null}
                     </td>
                     <td>{getUserName(r.doneBy)}</td>
                     <td style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: 160 }}>{r.notes || '—'}</td>
                     <td>
                       <span className={'badge ' + (r.completed ? 'badge-resolved' : 'badge-due')}>
-                        {r.completed ? 'Completed' : 'Pending'}
+                        {r.completed ? t('Completed') : t('Pending')}
                       </span>
                     </td>
                   </tr>

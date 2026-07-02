@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 
 export default function ConfirmDialog() {
   const { confirmState, closeConfirm } = useApp()
+  const { t } = useT()
 
   useEffect(() => {
     if (!confirmState) return
@@ -25,11 +27,11 @@ export default function ConfirmDialog() {
       onClick={(e) => { if (e.target === e.currentTarget) closeConfirm(false) }}>
       <div className="confirm-box">
         <div className={iconClass}>{icon}</div>
-        <div className="confirm-title">{title}</div>
-        <div className="confirm-message">{message}</div>
+        <div className="confirm-title">{t(title)}</div>
+        <div className="confirm-message">{t(message)}</div>
         <div className="confirm-actions">
-          <button className="btn btn-outline" onClick={() => closeConfirm(false)}>{cancelText}</button>
-          <button className={'btn ' + okClass} onClick={() => closeConfirm(true)} autoFocus>{confirmText}</button>
+          <button className="btn btn-outline" onClick={() => closeConfirm(false)}>{t(cancelText)}</button>
+          <button className={'btn ' + okClass} onClick={() => closeConfirm(true)} autoFocus>{t(confirmText)}</button>
         </div>
       </div>
     </div>

@@ -1,9 +1,11 @@
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { formatDate } from '../lib/utils.js'
 
 // Service history for all roles: read-only table + CSV export.
 export default function History() {
   const { serviceCycles, getMachine, getMachineName, getUserName, showToast } = useApp()
+  const { t } = useT()
 
   // Newest first (by date then time).
   const sorted = [...serviceCycles].sort((a, b) => {
@@ -38,18 +40,18 @@ export default function History() {
     a.download = 'brewzy_service_history.csv'
     a.click()
     URL.revokeObjectURL(url)
-    showToast('Exported service history')
+    showToast(t('Exported service history'))
   }
 
   return (
     <>
       <div className="ph">
         <div className="ph-text">
-          <h1>Service History</h1>
-          <p>Past service records across the fleet</p>
+          <h1>{t('Service History')}</h1>
+          <p>{t('Past service records across the fleet')}</p>
         </div>
         <div className="ph-actions">
-          <button className="btn btn-outline" onClick={exportCSV} disabled={!serviceCycles.length}>Export CSV</button>
+          <button className="btn btn-outline" onClick={exportCSV} disabled={!serviceCycles.length}>{t('Export CSV')}</button>
         </div>
       </div>
 
@@ -58,12 +60,12 @@ export default function History() {
           <table>
             <thead>
               <tr>
-                <th>Date &amp; Time</th>
-                <th>Machine</th>
-                <th>Operator</th>
-                <th>Completed Tasks</th>
-                <th>Online Checks</th>
-                <th>Notes</th>
+                <th>{t('Date & Time')}</th>
+                <th>{t('Machine')}</th>
+                <th>{t('Operator')}</th>
+                <th>{t('Completed Tasks')}</th>
+                <th>{t('Online Checks')}</th>
+                <th>{t('Notes')}</th>
               </tr>
             </thead>
             <tbody>
@@ -84,7 +86,7 @@ export default function History() {
                     <td><span style={{ fontSize: 12 }}>{completed} / {total} ✓</span></td>
                     <td>
                       <span style={{ fontSize: 11 }}>
-                        Check1: {s.onlineCheck1 || '—'}<br />Check2: {s.onlineCheck2 || '—'}
+                        {t('Check1')}: {s.onlineCheck1 ? t(s.onlineCheck1) : '—'}<br />{t('Check2')}: {s.onlineCheck2 ? t(s.onlineCheck2) : '—'}
                       </span>
                     </td>
                     <td style={{ maxWidth: 160, fontSize: 12, color: 'var(--text-secondary)' }}>{s.notes || '—'}</td>
@@ -97,7 +99,7 @@ export default function History() {
       ) : (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
-          <p>No service records yet</p>
+          <p>{t('No service records yet')}</p>
         </div>
       )}
     </>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { getDueStatus, formatDate } from '../lib/utils.js'
 import ServiceModal from '../components/ServiceModal.jsx'
 import IssueModal from '../components/IssueModal.jsx'
@@ -11,6 +12,7 @@ const stBdg = (s) => s === 'Active' ? 'badge-active' : s === 'Maintenance' ? 'ba
 
 export default function Machines({ onNavigate }) {
   const { machines, session, getMachine, removeRow, logActivity, showToast, showConfirm } = useApp()
+  const { t } = useT()
   const isManager = session?.role === 'manager'
 
   const [search, setSearch] = useState('')
@@ -34,26 +36,26 @@ export default function Machines({ onNavigate }) {
     const m = getMachine(id)
     const ok = await showConfirm({
       title: 'Delete machine?',
-      message: `This will permanently delete ${m ? m.name : 'this machine'} (${m ? m.machineId : ''}) along with its task list, service schedule, and all associated data. This action cannot be undone.`,
+      message: `${t('This will permanently delete')} ${m ? m.name : t('this machine')} (${m ? m.machineId : ''}) ${t('along with its task list, service schedule, and all associated data. This action cannot be undone.')}`,
       confirmText: 'Delete Machine',
       tone: 'danger',
     })
     if (!ok) return
     await removeRow('machines', id)
     logActivity('service', `Machine deleted: ${m ? m.name : id}`)
-    showToast('Machine deleted', '🗑')
+    showToast(t('Machine deleted'), '🗑')
   }
 
   return (
     <>
       <div className="ph">
         <div className="ph-text">
-          <h1>Machines</h1>
-          <p>Manage machines, schedules and assignments</p>
+          <h1>{t('Machines')}</h1>
+          <p>{t('Manage machines, schedules and assignments')}</p>
         </div>
         {isManager && (
           <div className="ph-actions">
-            <button className="btn btn-teal" onClick={() => setMachineEditId(null)}>+ Add Machine</button>
+            <button className="btn btn-teal" onClick={() => setMachineEditId(null)}>+ {t('Add Machine')}</button>
           </div>
         )}
       </div>
@@ -61,17 +63,17 @@ export default function Machines({ onNavigate }) {
       <div className="filter-bar">
         <input
           className="filter-input"
-          placeholder="Search by name, location or ID…"
+          placeholder={t('Search by name, location or ID…')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <select className="filter-select" value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
-          <option value="">All Status</option>
-          <option>Active</option><option>Inactive</option><option>Maintenance</option><option>Out of Service</option>
+          <option value="">{t('All Status')}</option>
+          <option value="Active">{t('Active')}</option><option value="Inactive">{t('Inactive')}</option><option value="Maintenance">{t('Maintenance')}</option><option value="Out of Service">{t('Out of Service')}</option>
         </select>
         <select className="filter-select" value={fDue} onChange={(e) => setFDue(e.target.value)}>
-          <option value="">All Due</option>
-          <option>Overdue</option><option>Due Today</option><option>Not Due</option>
+          <option value="">{t('All Due')}</option>
+          <option value="Overdue">{t('Overdue')}</option><option value="Due Today">{t('Due Today')}</option><option value="Not Due">{t('Not Due')}</option>
         </select>
       </div>
 
@@ -79,8 +81,8 @@ export default function Machines({ onNavigate }) {
         <table>
           <thead>
             <tr>
-              <th>Machine</th><th>Location</th><th>Duty</th><th>Freq.</th>
-              <th>Last Service</th><th>Due Status</th><th>Machine Status</th><th>Actions</th>
+              <th>{t('Machine')}</th><th>{t('Location')}</th><th>{t('Duty')}</th><th>{t('Freq.')}</th>
+              <th>{t('Last Service')}</th><th>{t('Due Status')}</th><th>{t('Machine Status')}</th><th>{t('Actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -93,25 +95,25 @@ export default function Machines({ onNavigate }) {
                     <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
                       {m.machineId}{' '}
                       {m.mapsLink && (
-                        <a href={m.mapsLink} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--brand)', fontWeight: 500 }}>📍 Map</a>
+                        <a href={m.mapsLink} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--brand)', fontWeight: 500 }}>📍 {t('Map')}</a>
                       )}
                     </div>
                   </td>
                   <td style={{ color: 'var(--text-secondary)' }}>{m.location}</td>
-                  <td><span className="stat-pill">{m.duty || 'Morning'}</span></td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{m.frequency}</td>
+                  <td><span className="stat-pill">{t(m.duty || 'Morning')}</span></td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{t(m.frequency)}</td>
                   <td style={{ color: 'var(--text-secondary)' }}>{formatDate(m.lastService)}</td>
-                  <td><span className={'badge ' + dueBdg(due)}>{due}</span></td>
-                  <td><span className={'badge ' + stBdg(m.status)}>{m.status}</span></td>
+                  <td><span className={'badge ' + dueBdg(due)}>{t(due)}</span></td>
+                  <td><span className={'badge ' + stBdg(m.status)}>{t(m.status)}</span></td>
                   <td className="actions-cell">
                     <div className="action-group">
-                      <button className="btn btn-outline btn-sm" onClick={() => setServiceId(m.id)}>✓ Service</button>
-                      <button className="btn btn-outline btn-sm" onClick={() => setIssuePrefill(m.id)}>⚠ Issue</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => setServiceId(m.id)}>✓ {t('Service')}</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => setIssuePrefill(m.id)}>⚠ {t('Issue')}</button>
                       {isManager && (
                         <>
-                          <button className="btn btn-teal btn-sm" onClick={() => setTasksId(m.id)}>Tasks</button>
-                          <button className="btn btn-outline btn-sm" onClick={() => setMachineEditId(m.id)}>Edit</button>
-                          <button className="btn btn-danger btn-sm btn-icon" title="Delete machine" onClick={() => deleteMachine(m.id)}>✕</button>
+                          <button className="btn btn-teal btn-sm" onClick={() => setTasksId(m.id)}>{t('Tasks')}</button>
+                          <button className="btn btn-outline btn-sm" onClick={() => setMachineEditId(m.id)}>{t('Edit')}</button>
+                          <button className="btn btn-danger btn-sm btn-icon" title={t('Delete machine')} onClick={() => deleteMachine(m.id)}>✕</button>
                         </>
                       )}
                     </div>
@@ -119,7 +121,7 @@ export default function Machines({ onNavigate }) {
                 </tr>
               )
             }) : (
-              <tr><td colSpan={8}><div className="empty-state"><p>No machines found</p></div></td></tr>
+              <tr><td colSpan={8}><div className="empty-state"><p>{t('No machines found')}</p></div></td></tr>
             )}
           </tbody>
         </table>

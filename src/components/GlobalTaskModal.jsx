@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { clone, freqMatchesMachineFreq, FREQ_LABEL } from '../lib/utils.js'
 import Modal from './Modal.jsx'
 
@@ -9,6 +10,7 @@ const FREQ_OPTS = ['daily', 'every2', 'every3', 'weekly', 'tech']
 // editIndex: number => edit globalTasks[editIndex]; null => new task.
 export default function GlobalTaskModal({ open, editIndex, onClose }) {
   const { machines, globalTasks, updateConfig, patchRow, showToast, genId } = useApp()
+  const { t } = useT()
 
   const editing = editIndex !== null && editIndex !== undefined
 
@@ -39,12 +41,12 @@ export default function GlobalTaskModal({ open, editIndex, onClose }) {
   const sameFreqMachines = machines.filter((m) => m.frequency && freqMatchesMachineFreq(freq, m.frequency))
   const assignSameFreq = () => {
     setChecked((c) => Array.from(new Set([...c, ...sameFreqMachines.map((m) => m.id)])))
-    showToast(`Selected ${sameFreqMachines.length} machine${sameFreqMachines.length !== 1 ? 's' : ''}`)
+    showToast(`${t('Selected')} ${sameFreqMachines.length} ${t('machines')}`)
   }
 
   const save = () => {
     const n = name.trim()
-    if (!n) { showToast('Please enter a task name', '⚠️'); return }
+    if (!n) { showToast(t('Please enter a task name'), '⚠️'); return }
 
     let task
     let newTasks
@@ -73,27 +75,27 @@ export default function GlobalTaskModal({ open, editIndex, onClose }) {
       }
     })
 
-    showToast(editing ? 'Task updated' : 'Task added')
+    showToast(editing ? t('Task updated') : t('Task added'))
     onClose?.()
   }
 
   const footer = (
     <>
-      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-teal" onClick={save}>Save Task</button>
+      <button className="btn btn-outline" onClick={onClose}>{t('Cancel')}</button>
+      <button className="btn btn-teal" onClick={save}>{t('Save Task')}</button>
     </>
   )
 
   return (
-    <Modal open={open} onClose={onClose} title={editing ? 'Edit Task' : 'New Task'} footer={footer}>
+    <Modal open={open} onClose={onClose} title={editing ? t('Edit Task') : t('New Task')} footer={footer}>
       <div className="form-group">
-        <label className="form-label">Task Name <span className="req">*</span></label>
-        <input className="form-control" value={name} onChange={(e) => setName(e.target.value)} placeholder="Describe the task..." />
+        <label className="form-label">{t('Task Name')} <span className="req">*</span></label>
+        <input className="form-control" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('Describe the task...')} />
       </div>
       <div className="form-group">
-        <label className="form-label">Frequency</label>
+        <label className="form-label">{t('Frequency')}</label>
         <select className="form-control" value={freq} onChange={(e) => setFreq(e.target.value)}>
-          {FREQ_OPTS.map((f) => <option key={f} value={f}>{FREQ_LABEL[f]}</option>)}
+          {FREQ_OPTS.map((f) => <option key={f} value={f}>{t(FREQ_LABEL[f])}</option>)}
         </select>
       </div>
 
@@ -101,15 +103,15 @@ export default function GlobalTaskModal({ open, editIndex, onClose }) {
         <div style={{ background: 'var(--brand-subtle)', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--brand)' }}>⚡ Quick Assign — Same Frequency</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--brand)' }}>⚡ {t('Quick Assign — Same Frequency')}</div>
               <div style={{ fontSize: 11, color: 'var(--brand)', marginTop: 2 }}>
                 {sameFreqMachines.length
-                  ? `${sameFreqMachines.length} machine${sameFreqMachines.length > 1 ? 's' : ''} with ${FREQ_LABEL[freq]} service frequency:`
-                  : 'No machines with matching service frequency found.'}
+                  ? `${sameFreqMachines.length} ${t('machine(s) with')} ${t(FREQ_LABEL[freq])} ${t('service frequency:')}`
+                  : t('No machines with matching service frequency found.')}
               </div>
             </div>
             {sameFreqMachines.length > 0 && (
-              <button className="btn btn-teal btn-sm" onClick={assignSameFreq}>Assign to all</button>
+              <button className="btn btn-teal btn-sm" onClick={assignSameFreq}>{t('Assign to all')}</button>
             )}
           </div>
           {sameFreqMachines.length > 0 && (
@@ -122,9 +124,9 @@ export default function GlobalTaskModal({ open, editIndex, onClose }) {
 
       <div className="form-group">
         <label className="form-label">
-          Assign to Machines <span style={{ fontWeight: 400, color: 'var(--text-tertiary)' }}>(check all that apply)</span>
-          <button type="button" onClick={() => selectAll(true)} style={{ marginLeft: 8, fontSize: 10, color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>All</button>
-          <button type="button" onClick={() => selectAll(false)} style={{ fontSize: 10, color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>None</button>
+          {t('Assign to Machines')} <span style={{ fontWeight: 400, color: 'var(--text-tertiary)' }}>{t('(check all that apply)')}</span>
+          <button type="button" onClick={() => selectAll(true)} style={{ marginLeft: 8, fontSize: 10, color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{t('All')}</button>
+          <button type="button" onClick={() => selectAll(false)} style={{ fontSize: 10, color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{t('None')}</button>
         </label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
           {machines.map((m) => (

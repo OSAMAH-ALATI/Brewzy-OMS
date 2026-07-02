@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal.jsx'
 import { useApp } from '../context/AppContext.jsx'
+import { useT } from '../lib/i18n.js'
 import { genId, today } from '../lib/utils.js'
+import { fileToCompressedDataURL } from '../lib/image.js'
+import '../features.css'
+
+const MAX_PHOTOS = 4
 
 const EMPTY = {
   machineId: '', severity: 'Medium', status: 'Open',
@@ -11,12 +16,14 @@ const EMPTY = {
 export default function IssueModal({ open, issueId, prefillMachineId, onClose }) {
   const {
     machines, issues, getMachine, getUser, getUserName, getMachineName,
-    session, setRow, patchRow, logActivity, showToast,
+    session, setRow, patchRow, logActivity, showToast, notify,
   } = useApp()
+  const { t } = useT()
   const isEdit = !!issueId
 
   const [form, setForm] = useState(EMPTY)
   const [descErr, setDescErr] = useState(false)
+  const [photos, setPhotos] = useState([])
 
   useEffect(() => {
     if (!open) return
@@ -29,10 +36,12 @@ export default function IssueModal({ open, issueId, prefillMachineId, onClose })
           description: i.description || '', assignedTo: [...(i.assignedTo || [])],
           techResponse: i.techResponse || '', resolutionNotes: i.resolutionNotes || '',
         })
+        setPhotos([...(i.photos || [])])
       }
     } else {
       const firstMachine = prefillMachineId || machines[0]?.id || ''
       setForm({ ...EMPTY, machineId: firstMachine })
+      setPhotos([])
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, issueId, prefillMachineId])
@@ -55,6 +64,21 @@ export default function IssueModal({ open, issueId, prefillMachineId, onClose })
 
   const onMachineChange = (id) => setForm((f) => ({ ...f, machineId: id, assignedTo: [] }))
 
+  const onAddPhotos = async (e) => {
+    const files = Array.from(e.target.files || [])
+    e.target.value = ''
+    for (const file of files) {
+      if (photos.length >= MAX_PHOTOS) { showToast(`${t('Up to')} ${MAX_PHOTOS} ${t('photos')}`, '📷'); break }
+      try {
+        const url = await fileToCompressedDataURL(file)
+        setPhotos((prev) => (prev.length >= MAX_PHOTOS ? prev : [...prev, url]))
+      } catch {
+        showToast(t('Could not add that image'), '⚠️')
+      }
+    }
+  }
+  const removePhoto = (idx) => setPhotos((prev) => prev.filter((_, i) => i !== idx))
+
   const save = () => {
     const desc = form.description.trim()
     if (!desc) { setDescErr(true); return }
@@ -66,15 +90,30 @@ export default function IssueModal({ open, issueId, prefillMachineId, onClose })
       assignedTo: [...form.assignedTo],
       techResponse: form.techResponse,
       resolutionNotes: form.resolutionNotes,
+      photos: [...photos],
     }
     const assignedNames = form.assignedTo.map((id) => getUserName(id)).join(', ')
 
+    // Notify newly-added technician assignees.
+    const notifyTechs = (targetIssueId, newAssignees) => {
+      const shortDesc = desc.length > 60 ? desc.substring(0, 60) + '…' : desc
+      newAssignees.forEach((uid) => {
+        const u = getUser(uid)
+        if (u && u.role === 'technician') {
+          notify(uid, `${t('You were assigned an issue:')} ${getMachineName(fields.machineId)} — ${shortDesc}`, targetIssueId)
+        }
+      })
+    }
+
     if (isEdit) {
       const existing = issues.find((x) => x.id === issueId)
+      const prevAssigned = existing?.assignedTo || []
+      const newlyAdded = form.assignedTo.filter((id) => !prevAssigned.includes(id))
       const seenBy = (existing?.seenBy || []).filter((uid) => uid === session.userId)
       patchRow('issues', issueId, { ...fields, seenBy })
       logActivity('issue-update', `Issue updated: ${getMachineName(fields.machineId)} → ${fields.status}${assignedNames ? ' (assigned: ' + assignedNames + ')' : ''}`)
-      showToast('Issue updated', '⚠️')
+      notifyTechs(issueId, newlyAdded)
+      showToast(t('Issue updated'), '⚠️')
     } else {
       const id = genId('i_')
       setRow('issues', id, {
@@ -84,7 +123,8 @@ export default function IssueModal({ open, issueId, prefillMachineId, onClose })
         seenBy: [session.userId],
       })
       logActivity('issue', `Issue reported by ${session.name}: ${desc.substring(0, 50)} – ${getMachineName(fields.machineId)}${assignedNames ? ' → ' + assignedNames : ''}`)
-      showToast('Issue reported', '⚠️')
+      notifyTechs(id, form.assignedTo)
+      showToast(t('Issue reported'), '⚠️')
     }
     onClose?.()
   }
@@ -93,16 +133,16 @@ export default function IssueModal({ open, issueId, prefillMachineId, onClose })
     <Modal
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Edit Issue' : 'Report Issue'}
+      title={isEdit ? t('Edit Issue') : t('Report Issue')}
       footer={(
         <>
-          <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-          <button className="btn btn-teal" onClick={save}>Save Issue</button>
+          <button className="btn btn-outline" onClick={onClose}>{t('Cancel')}</button>
+          <button className="btn btn-teal" onClick={save}>{t('Save Issue')}</button>
         </>
       )}
     >
       <div className="form-group">
-        <label className="form-label">Machine <span className="req">*</span></label>
+        <label className="form-label">{t('Machine')} <span className="req">*</span></label>
         <select className="form-control" value={form.machineId} onChange={(e) => onMachineChange(e.target.value)}>
           {machines.map((m) => <option key={m.id} value={m.id}>{m.name} – {m.location}</option>)}
         </select>
@@ -110,57 +150,79 @@ export default function IssueModal({ open, issueId, prefillMachineId, onClose })
 
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Severity</label>
+          <label className="form-label">{t('Severity')}</label>
           <select className="form-control" value={form.severity} onChange={(e) => set('severity', e.target.value)}>
-            <option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+            <option value="Low">{t('Low')}</option><option value="Medium">{t('Medium')}</option><option value="High">{t('High')}</option><option value="Critical">{t('Critical')}</option>
           </select>
         </div>
         <div className="form-group">
-          <label className="form-label">Status</label>
+          <label className="form-label">{t('Status')}</label>
           <select className="form-control" value={form.status} onChange={(e) => set('status', e.target.value)}>
-            <option>Open</option><option>In Progress</option><option>Resolved</option>
+            <option value="Open">{t('Open')}</option><option value="In Progress">{t('In Progress')}</option><option value="Resolved">{t('Resolved')}</option>
           </select>
         </div>
       </div>
 
       <div className="form-group">
-        <label className="form-label">Description <span className="req">*</span></label>
+        <label className="form-label">{t('Description')} <span className="req">*</span></label>
         <textarea
           className={'form-control' + (descErr ? ' error' : '')}
-          placeholder="Describe the issue..."
+          placeholder={t('Describe the issue...')}
           value={form.description}
           onChange={(e) => { set('description', e.target.value); if (descErr) setDescErr(false) }}
         />
-        <div className={'field-err' + (descErr ? ' show' : '')}>Please describe the issue</div>
+        <div className={'field-err' + (descErr ? ' show' : '')}>{t('Please describe the issue')}</div>
       </div>
 
       <div className="form-group">
-        <label className="form-label">Assign To <span style={{ fontWeight: 400, color: 'var(--text-tertiary)' }}>(select who needs to handle this)</span></label>
+        <label className="form-label">{t('Assign To')} <span style={{ fontWeight: 400, color: 'var(--text-tertiary)' }}>{t('(select who needs to handle this)')}</span></label>
         <div className="assign-pills">
           {!machine ? (
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Select a machine first</div>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{t('Select a machine first')}</div>
           ) : assignable.length ? assignable.map((a) => {
             const isSel = form.assignedTo.includes(a.id)
             const cls = isSel ? (a.role === 'operator' ? 'selected-op' : 'selected-tech') : ''
             return (
               <div key={a.id} className={'assign-pill ' + cls} onClick={() => toggleAssignee(a.id)}>
-                {a.role === 'operator' ? '🚗' : '🔧'} {a.name} <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{a.role}</span>
+                {a.role === 'operator' ? '🚗' : '🔧'} {a.name} <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{t(a.role)}</span>
               </div>
             )
           }) : (
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No operators or technician assigned to this machine</div>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{t('No operators or technician assigned to this machine')}</div>
           )}
         </div>
       </div>
 
       <div className="form-group">
-        <label className="form-label">Technician Response / Notes</label>
-        <textarea className="form-control" placeholder="Tech notes..." value={form.techResponse} onChange={(e) => set('techResponse', e.target.value)} />
+        <label className="form-label">{t('Technician Response / Notes')}</label>
+        <textarea className="form-control" placeholder={t('Tech notes...')} value={form.techResponse} onChange={(e) => set('techResponse', e.target.value)} />
       </div>
 
       <div className="form-group">
-        <label className="form-label">Resolution Notes</label>
-        <textarea className="form-control" placeholder="How was it resolved?" value={form.resolutionNotes} onChange={(e) => set('resolutionNotes', e.target.value)} />
+        <label className="form-label">{t('Resolution Notes')}</label>
+        <textarea className="form-control" placeholder={t('How was it resolved?')} value={form.resolutionNotes} onChange={(e) => set('resolutionNotes', e.target.value)} />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">{t('Photos')}</label>
+        <div className="photo-grid">
+          {photos.map((src, idx) => (
+            <div key={idx} className="photo-thumb">
+              <img src={src} alt={`Photo ${idx + 1}`} />
+              <button type="button" className="photo-remove" title={t('Remove')} onClick={() => removePhoto(idx)}>✕</button>
+            </div>
+          ))}
+        </div>
+        {photos.length < MAX_PHOTOS && (
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={onAddPhotos}
+            style={{ marginTop: 8, fontSize: 12 }}
+          />
+        )}
+        <div className="photo-hint">{t('Attach up to')} {MAX_PHOTOS} {t('photos')}</div>
       </div>
     </Modal>
   )

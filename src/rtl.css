@@ -1,0 +1,61 @@
+/* ─────────────────────────────────────────────────────────────
+   RTL overrides for Arabic. Mirrors the core fixed-sidebar layout
+   to the right and flips text direction. Numbers/latin stay LTR
+   naturally within an rtl document.
+   ───────────────────────────────────────────────────────────── */
+
+[dir="rtl"] body { text-align: right; }
+
+/* Sidebar: pin to the right edge instead of the left. */
+[dir="rtl"] .sidebar {
+  left: auto;
+  right: 0;
+  border-right: none;
+  border-left: 1px solid var(--sb-border);
+}
+
+/* Main content: push away from the right-hand sidebar. */
+[dir="rtl"] .main {
+  margin-left: 0;
+  margin-right: var(--sb-w);
+  transition: margin-right var(--dur-slow) var(--ease);
+}
+
+/* Active nav accent bar → move to the right side. */
+[dir="rtl"] .sb-item.active::before {
+  left: auto;
+  right: -8px;
+}
+
+/* Sidebar chevron points the other way in RTL. */
+[dir="rtl"] .sb-chevron { transform: scaleX(-1); }
+[dir="rtl"] .sb-chevron.open { transform: scaleX(-1); }
+
+/* Topbar / page header: keep their flex rows but read right-to-left. */
+[dir="rtl"] .topbar,
+[dir="rtl"] .ph { direction: rtl; }
+
+/* Tables read right-to-left. */
+[dir="rtl"] th { text-align: right; }
+[dir="rtl"] td { text-align: right; }
+
+/* Sticky last action column sits on the left edge in RTL. */
+[dir="rtl"] table th:last-child,
+[dir="rtl"] table td:last-child {
+  right: auto;
+  left: 0;
+}
+
+/* Collapsed / off-canvas sidebar animates toward the right. */
+[dir="rtl"] .sidebar-collapsed .sidebar {
+  transform: translateX(calc(1 * var(--sb-w)));
+}
+[dir="rtl"] .sidebar-collapsed .main {
+  margin-right: 0;
+}
+
+@media (max-width: 768px) {
+  [dir="rtl"] .sidebar { transform: translateX(100%); }
+  [dir="rtl"] .sidebar.open { transform: translateX(0); }
+  [dir="rtl"] .main { margin-right: 0; }
+}
