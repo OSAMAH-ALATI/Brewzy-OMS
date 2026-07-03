@@ -5,11 +5,12 @@ import { useT } from '../lib/i18n.js'
 
 // Add / edit a team member. userId=null => new member.
 export default function UserModal({ open, userId, onClose }) {
-  const { users, machines, getUser, setRow, patchRow, showToast, genId } = useApp()
+  const { users, machines, getUser, setRow, patchRow, showToast, genId, provisionUser } = useApp()
   const { t } = useT()
 
   const isEdit = !!userId
   const isPrimary = userId === 'u_manager'
+  const migrated = isEdit && getUser(userId)?.password === undefined
 
   const [name, setName] = useState('')
   const [role, setRole] = useState('operator')
@@ -44,18 +45,27 @@ export default function UserModal({ open, userId, onClose }) {
     const un = username.trim()
     if (!nm) { setErr(t("Please enter the member's full name.")); return }
     if (!un) { setErr(t('Please set a username.')); return }
-    if (!password) { setErr(t('Please set a password.')); return }
-    if (password.length < 4) { setErr(t('Password must be at least 4 characters.')); return }
+    if (!isEdit && !password) { setErr(t('Please set a password.')); return }
+    if (password && password.length < 4) { setErr(t('Password must be at least 4 characters.')); return }
     if (isPrimary && role !== 'manager') { setErr(t('The primary admin account must stay as Manager.')); return }
     const dupe = users.find((u) => u.username?.toLowerCase() === un.toLowerCase() && u.id !== userId)
     if (dupe) { setErr(`${t('Username')} "${un}" ${t('is already taken. Choose another.')}`); return }
 
     if (isEdit) {
-      await patchRow('users', userId, { name: nm, username: un, password, role })
+      const patch = { name: nm, username: un, role }
+      if (password && !migrated) patch.password = password // only pre-migration PIN edits take effect
+      await patchRow('users', userId, patch)
       showToast(t('Member updated'))
     } else {
       const id = genId('u_')
-      await setRow('users', id, { id, name: nm, role, username: un, password })
+      // Create a real secured account when possible; fall back to legacy PIN if
+      // Email/Password sign-in isn't enabled yet (they'll migrate on first login).
+      let uid = null
+      try { uid = await provisionUser(id, password) } catch { /* provider not enabled yet */ }
+      const docData = { id, name: nm, role, username: un }
+      if (uid) docData.uid = uid
+      else docData.password = password
+      await setRow('users', id, docData)
       // Auto-assign new user to machines by default.
       if (role === 'operator') {
         await Promise.all(machines.map((m) => {
@@ -104,17 +114,22 @@ export default function UserModal({ open, userId, onClose }) {
           <input className="form-control" value={username} placeholder={t('e.g. ahmad_op')} autoComplete="off" onChange={(e) => setUsername(e.target.value)} />
         </div>
         <div className="form-group">
-          <label className="form-label">{t('Password')} <span className="req">*</span></label>
+          <label className="form-label">{t('Password')} {!isEdit && <span className="req">*</span>}</label>
           <div className="pw-wrapper">
             <input
               className="form-control"
               type={showPw ? 'text' : 'password'}
               value={password}
-              placeholder={t('Set password')}
+              placeholder={isEdit ? t('Leave blank to keep current') : t('Set password')}
               onChange={(e) => setPassword(e.target.value)}
             />
             <button className="pw-toggle" type="button" tabIndex={-1} onClick={() => setShowPw((s) => !s)}>👁</button>
           </div>
+          {migrated && (
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6 }}>
+              {t('This member has a secured login — their PIN can no longer be changed here. To reset it, remove and re-add them.')}
+            </div>
+          )}
         </div>
       </div>
     </Modal>

@@ -15,8 +15,14 @@ const FEATURES = [
 ]
 
 export default function Access() {
-  const { access, updateConfig, showToast } = useApp()
+  const { access, updateConfig, showToast, users, allowlistUids } = useApp()
   const { t } = useT()
+
+  // Security migration readiness: a member is "ready" once they've logged in at
+  // least once since the security update (their secured account is on the allow-list).
+  const ready = users.filter((u) => u.uid && allowlistUids.includes(u.uid))
+  const pending = users.filter((u) => !(u.uid && allowlistUids.includes(u.uid)))
+  const allReady = users.length > 0 && pending.length === 0
 
   const toggle = (role, feature, val) => {
     updateConfig({
@@ -34,6 +40,33 @@ export default function Access() {
         <div className="ph-text">
           <h1>{t('Access Control')}</h1>
           <p>{t('Choose which pages operators and technicians can see')}</p>
+        </div>
+      </div>
+
+      {/* ── Security lock-down status ── */}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="card-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="card-title">🔒 {t('Security — Team Sign-in Status')}</div>
+          <span className={'badge ' + (allReady ? 'badge-ok' : 'badge-due')}>
+            {ready.length}/{users.length} {t('ready')}
+          </span>
+        </div>
+        <div style={{ padding: '12px 20px 16px' }}>
+          <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.6 }}>
+            {allReady
+              ? t('Everyone has signed in and has a secured account. You can now safely publish the strict database rules to lock out anyone outside your team.')
+              : t('Each member below needs to sign in once so their secured account is created. Wait until everyone shows ✅ before publishing the strict database rules.')}
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {users.map((u) => {
+              const ok = u.uid && allowlistUids.includes(u.uid)
+              return (
+                <span key={u.id} className="stat-pill" style={{ borderColor: ok ? 'var(--success)' : 'var(--border)' }}>
+                  {ok ? '✅' : '⏳'} {u.name} <span style={{ color: 'var(--text-tertiary)' }}>@{u.username}</span>
+                </span>
+              )
+            })}
+          </div>
         </div>
       </div>
 

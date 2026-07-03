@@ -1,16 +1,43 @@
 rules_version = '2';
 
-// Brewzy Operations — Firestore security rules
+// ─────────────────────────────────────────────────────────────
+// Brewzy OMS — PHASE B (locked down) security rules
+// ─────────────────────────────────────────────────────────────
+// Publish these ONLY after every team member has signed in once (check the
+// Access Control → "Security — Team Sign-in Status" panel shows everyone ✅).
 //
-// The app signs every device in with Firebase *anonymous auth* on boot, so the
-// database is never open to the public internet, yet workers still log in with
-// the simple username + PIN model inside the app. Only authenticated clients
-// (i.e. clients that loaded the real app and signed in anonymously) can read or
-// write company data.
+// How it works:
+//  • Each team member has a real Firebase account whose uid is listed in
+//    config/allowlist. Only those uids can read/write company data.
+//  • A signed-in (even anonymous) client may read the users list — but it holds
+//    NO secrets (PINs live in Firebase Auth, not the database) — so the login
+//    screen can still map a username to an account. Everything else is members-only.
+//  • Random visitors with the URL sign in anonymously, are NOT on the allow-list,
+//    and therefore can read nothing but public names and write nothing.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isMember() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/config/allowlist)
+        && request.auth.uid in get(/databases/$(database)/documents/config/allowlist).data.uids;
+    }
+
+    // Login lookup — basic, secret-free member profiles.
+    match /users/{id} {
+      allow read: if request.auth != null;
+      allow write: if isMember();
+    }
+
+    // The allow-list itself — readable by any signed-in client, writable by members.
+    match /config/allowlist {
+      allow read: if request.auth != null;
+      allow write: if isMember();
+    }
+
+    // Everything else — company data — is members-only.
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isMember();
     }
   }
 }

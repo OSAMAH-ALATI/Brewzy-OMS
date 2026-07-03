@@ -9,12 +9,21 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  const submit = () => {
+  const submit = async () => {
+    if (busy) return
     setError('')
     if (!username.trim()) { setError('Please enter your username.'); return }
-    const res = login(username, password)
-    if (!res.ok) setError(res.error)
+    setBusy(true)
+    try {
+      const res = await login(username, password)
+      if (!res.ok) setError(res.error)
+    } catch {
+      setError('Sign-in failed. Please try again.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -47,7 +56,9 @@ export default function Login() {
             </div>
           </div>
 
-          <button className="auth-btn" onClick={submit}>{t('Sign In')} →</button>
+          <button className="auth-btn" onClick={submit} disabled={busy}>
+            {busy ? t('Signing in…') : <>{t('Sign In')} →</>}
+          </button>
           <div className="auth-hint">{t("Contact your manager if you don't have access")}</div>
         </div>
       </div>

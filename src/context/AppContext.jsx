@@ -10,12 +10,18 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import {
   collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, getDocs, getDoc, writeBatch,
+  arrayUnion, arrayRemove, deleteField,
 } from 'firebase/firestore'
-import { db, ensureSignedIn, isFirebaseConfigured } from '../lib/firebase'
+import {
+  db, auth, ensureSignedIn, isFirebaseConfigured,
+  signInUser, createAuthAccount,
+} from '../lib/firebase'
 import { seedData } from '../lib/seed'
 import { genId, today, yesterday, nowStamp, clone } from '../lib/utils'
 
-const COLLECTIONS = ['users', 'machines', 'issues', 'serviceCycles', 'activityLog', 'emptyRecords', 'notifications']
+// `users` is subscribed always (needed by the login screen). These company
+// collections are subscribed only once a team member is logged in.
+const MEMBER_COLLECTIONS = ['machines', 'issues', 'serviceCycles', 'activityLog', 'emptyRecords', 'notifications']
 const CONFIG_DOC = ['config', 'main']
 
 const AppContext = createContext(null)
@@ -31,6 +37,8 @@ export function AppProvider({ children }) {
     users: [], machines: [], issues: [], serviceCycles: [], activityLog: [], emptyRecords: [], notifications: [],
   })
   const [config, setConfig] = useState({ globalTasks: [], emptySteps: [], accessControl: null })
+  // uids allowed to access company data (security lock-down)
+  const [allowlistUids, setAllowlistUids] = useState([])
 
   // Session (persisted locally so a refresh keeps you logged in)
   const [session, setSession] = useState(() => {
@@ -68,7 +76,11 @@ export function AppProvider({ children }) {
     if (confirmResolve.current) { confirmResolve.current(result); confirmResolve.current = null }
   }, [])
 
-  // ── Boot: sign in, seed if needed, subscribe ──────────────
+  // ── Boot: sign in, seed if needed, subscribe to login-safe data ──
+  // Only `users`, config and the allow-list are subscribed here — these are
+  // readable by any signed-in client (even before login), so the login screen
+  // works. Company data is subscribed separately once a member is logged in,
+  // so a not-yet-logged-in visitor never trips a permission-denied listener.
   useEffect(() => {
     if (!isFirebaseConfigured) return
     let unsubs = []
@@ -77,23 +89,18 @@ export function AppProvider({ children }) {
     ;(async () => {
       try {
         await ensureSignedIn()
-        await seedIfEmpty()
+        // Best-effort: seeds a brand-new project; harmless (and skipped) once
+        // seeded or when the database is locked down to members.
+        try { await seedIfEmpty() } catch { /* already seeded / no permission */ }
         if (cancelled) return
 
-        // Subscribe to each collection
-        COLLECTIONS.forEach((name) => {
-          const unsub = onSnapshot(collection(db, name), (snap) => {
-            const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-            setData((prev) => ({ ...prev, [name]: rows }))
-          }, (err) => { console.error(`snapshot ${name}`, err) })
-          unsubs.push(unsub)
-        })
+        unsubs.push(onSnapshot(collection(db, 'users'), (snap) => {
+          setData((prev) => ({ ...prev, users: snap.docs.map((d) => ({ id: d.id, ...d.data() })) }))
+        }, (err) => { console.error('snapshot users', err) }))
 
-        // Subscribe to the single config doc
-        const unsubCfg = onSnapshot(doc(db, ...CONFIG_DOC), (d) => {
-          if (d.exists()) setConfig(d.data())
-        }, (err) => { console.error('snapshot config', err) })
-        unsubs.push(unsubCfg)
+        unsubs.push(onSnapshot(doc(db, 'config', 'allowlist'), (d) => {
+          setAllowlistUids(d.exists() ? (d.data().uids || []) : [])
+        }, () => {}))
 
         setStatus('ready')
       } catch (e) {
@@ -104,6 +111,19 @@ export function AppProvider({ children }) {
 
     return () => { cancelled = true; unsubs.forEach((u) => u && u()) }
   }, [])
+
+  // ── Company data: subscribe only while a member is logged in ──
+  useEffect(() => {
+    if (!isFirebaseConfigured || !session) return
+    const unsubs = MEMBER_COLLECTIONS.map((name) => onSnapshot(collection(db, name), (snap) => {
+      setData((prev) => ({ ...prev, [name]: snap.docs.map((d) => ({ id: d.id, ...d.data() })) }))
+    }, (err) => { console.error(`snapshot ${name}`, err) }))
+    // config/main (globalTasks, emptySteps, accessControl) is members-only.
+    unsubs.push(onSnapshot(doc(db, ...CONFIG_DOC), (d) => {
+      if (d.exists()) setConfig(d.data())
+    }, (err) => { console.error('snapshot config', err) }))
+    return () => unsubs.forEach((u) => u && u())
+  }, [session?.userId])
 
   async function seedIfEmpty() {
     const cfgSnap = await getDoc(doc(db, ...CONFIG_DOC))
@@ -148,16 +168,71 @@ export function AppProvider({ children }) {
     }
   }, [])
 
+  // ── Security allow-list helpers ───────────────────────────
+  const addToAllowlist = useCallback(
+    (uid) => setDoc(doc(db, 'config', 'allowlist'), { uids: arrayUnion(uid) }, { merge: true }),
+    [],
+  )
+  const removeFromAllowlist = useCallback(
+    (uid) => setDoc(doc(db, 'config', 'allowlist'), { uids: arrayRemove(uid) }, { merge: true }),
+    [],
+  )
+  // Create a real Firebase account for a new member + add them to the allow-list.
+  const provisionUser = useCallback(async (userId, pin) => {
+    const uid = await createAuthAccount(userId, pin)
+    await addToAllowlist(uid).catch(() => {})
+    return uid
+  }, [addToAllowlist])
+
   // ── Session ───────────────────────────────────────────────
-  const login = useCallback((username, password) => {
+  // Backward-compatible: if Firebase email/password isn't set up yet, falls back
+  // to the legacy PIN check so nothing breaks during the migration window.
+  const login = useCallback(async (username, password) => {
     const u = data.users.find((x) => x.username?.toLowerCase() === username.trim().toLowerCase())
     if (!u) return { ok: false, error: 'No account found with that username.' }
-    if (u.password !== password) return { ok: false, error: 'Incorrect password. Please try again.' }
-    const s = { userId: u.id, role: u.role, name: u.name }
+
+    const legacyOk = u.password !== undefined && u.password === password
+    let authUid = null
+
+    try {
+      const cred = await signInUser(u.id, password)
+      authUid = cred.user.uid
+    } catch (e) {
+      if (legacyOk) {
+        // Not migrated yet → create the secure account now (or provider disabled).
+        try {
+          await createAuthAccount(u.id, password)
+          const cred = await signInUser(u.id, password)
+          authUid = cred.user.uid
+        } catch (ce) {
+          if (ce.code === 'auth/email-already-in-use') {
+            return { ok: false, error: 'Incorrect password. Please try again.' }
+          }
+          // e.g. provider not enabled yet → fall through on the legacy check
+        }
+      } else if (['auth/invalid-credential', 'auth/wrong-password', 'auth/user-not-found'].includes(e.code)) {
+        return { ok: false, error: 'Incorrect password. Please try again.' }
+      } else {
+        return { ok: false, error: 'Sign-in failed. Please try again.' }
+      }
+    }
+
+    if (!authUid && !legacyOk) return { ok: false, error: 'Incorrect password. Please try again.' }
+
+    if (authUid) {
+      // Record on allow-list, store the account id, and drop the plaintext PIN
+      // (now held securely by Firebase Auth).
+      addToAllowlist(authUid).catch(() => {})
+      const patch = { uid: authUid }
+      if (u.password !== undefined) patch.password = deleteField()
+      updateDoc(doc(db, 'users', u.id), patch).catch(() => {})
+    }
+
+    const s = { userId: u.id, role: u.role, name: u.name, uid: authUid || null }
     setSession(s)
     localStorage.setItem('brewzy-session', JSON.stringify(s))
     return { ok: true }
-  }, [data.users])
+  }, [data.users, addToAllowlist])
 
   const logout = useCallback(() => {
     setSession(null)
@@ -188,10 +263,12 @@ export function AppProvider({ children }) {
     confirmState, showConfirm, closeConfirm,
     setRow, patchRow, removeRow, updateConfig, logActivity, genId,
     notify, markNotifRead,
+    allowlistUids, provisionUser, removeFromAllowlist,
     getUser, getUserName, getMachine, getMachineName, visitCount,
   }), [status, errorMsg, data, config, access, session, login, logout, theme, toggleTheme,
       toast, showToast, confirmState, showConfirm, closeConfirm, setRow, patchRow, removeRow,
-      updateConfig, logActivity, notify, markNotifRead, getUser, getUserName, getMachine, getMachineName, visitCount])
+      updateConfig, logActivity, notify, markNotifRead, allowlistUids, provisionUser, removeFromAllowlist,
+      getUser, getUserName, getMachine, getMachineName, visitCount])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

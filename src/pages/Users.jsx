@@ -5,7 +5,7 @@ import UserModal from '../components/UserModal.jsx'
 
 // Manager-only team management: grouped by role, with add/edit/delete.
 export default function Users() {
-  const { users, machines, removeRow, patchRow, showConfirm, showToast } = useApp()
+  const { users, machines, removeRow, patchRow, showConfirm, showToast, removeFromAllowlist } = useApp()
   const { t } = useT()
   // undefined = closed, null = new member, id = edit
   const [editId, setEditId] = useState(undefined)
@@ -28,6 +28,8 @@ export default function Users() {
       tone: 'danger',
     })
     if (!ok) return
+    // Revoke their data access (their secured account can no longer read/write).
+    if (u.uid) removeFromAllowlist(u.uid).catch(() => {})
     await removeRow('users', u.id)
     // Clean the user out of every machine that references them.
     await Promise.all(machines.map((m) => {
