@@ -27,7 +27,8 @@ export default function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile
 
   const [openDepts, setOpenDepts] = useState(() => {
     const init = {}
-    MANAGER_DEPTS.forEach((d) => { init[d.id] = localStorage.getItem('sb-dept-' + d.id) !== '0' })
+    // Departments start collapsed by default; only ones the user explicitly opened stay open.
+    MANAGER_DEPTS.forEach((d) => { init[d.id] = localStorage.getItem('sb-dept-' + d.id) === '1' })
     return init
   })
   const toggleDept = (id) => {
@@ -62,6 +63,7 @@ export default function Sidebar({ current, onNavigate, mobileOpen, onCloseMobile
               <div className="sb-dept-hdr" onClick={() => toggleDept(dept.id)}>
                 <span className="sb-ico">{dept.icon}</span>
                 <span className="sb-dept-label">{t(dept.label)}</span>
+                {dept.soon && <span className="sb-soon">{t('Soon')}</span>}
                 <span className={'sb-chevron' + (openDepts[dept.id] ? ' open' : '')}>›</span>
               </div>
               {openDepts[dept.id] && (

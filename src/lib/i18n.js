@@ -12,6 +12,7 @@ const STORAGE_KEY = 'brewzy-lang'
 const DICT = {
   en: {},
   ar: {
+    'Soon': 'قريباً',
     // ── Page titles (nav.js PAGE_TITLES) ──
     'Operations Dashboard': 'لوحة العمليات',
     "Today's Route": 'مسار اليوم',

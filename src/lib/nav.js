@@ -30,7 +30,7 @@ export const MANAGER_DEPTS = [
     ],
   },
   {
-    id: 'supply', icon: '📦', label: 'Supply Chain',
+    id: 'supply', icon: '📦', label: 'Supply Chain', soon: true,
     items: [
       { id: 'inventory', icon: '📦', label: 'Inventory' },
       { id: 'procurement', icon: '🛒', label: 'Procurement' },
