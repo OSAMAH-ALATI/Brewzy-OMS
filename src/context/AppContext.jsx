@@ -21,7 +21,7 @@ import { genId, today, yesterday, nowStamp, clone } from '../lib/utils'
 
 // `users` is subscribed always (needed by the login screen). These company
 // collections are subscribed only once a team member is logged in.
-const MEMBER_COLLECTIONS = ['machines', 'issues', 'serviceCycles', 'activityLog', 'emptyRecords', 'notifications']
+const MEMBER_COLLECTIONS = ['machines', 'issues', 'serviceCycles', 'activityLog', 'emptyRecords', 'notifications', 'inventory', 'suppliers', 'purchaseOrders']
 const CONFIG_DOC = ['config', 'main']
 
 const AppContext = createContext(null)
@@ -35,6 +35,7 @@ export function AppProvider({ children }) {
   // Live data
   const [data, setData] = useState({
     users: [], machines: [], issues: [], serviceCycles: [], activityLog: [], emptyRecords: [], notifications: [],
+    inventory: [], suppliers: [], purchaseOrders: [],
   })
   const [config, setConfig] = useState({ globalTasks: [], emptySteps: [], accessControl: null })
   // uids allowed to access company data (security lock-down)

@@ -12,6 +12,8 @@ export const PAGE_TITLES = {
   'empty-records': 'Machine Empty Records',
   'empty-checklist': 'Empty Machine Checklist',
   history: 'Service History',
+  inventory: 'Inventory',
+  procurement: 'Procurement',
 }
 
 // Manager sidebar — collapsible departments
@@ -25,6 +27,13 @@ export const MANAGER_DEPTS = [
       { id: 'issues', icon: '⚠️', label: 'Issue Tracker' },
       { id: 'history', icon: '📋', label: 'Service History' },
       { id: 'empty-records', icon: '📋', label: 'Empty Records' },
+    ],
+  },
+  {
+    id: 'supply', icon: '📦', label: 'Supply Chain',
+    items: [
+      { id: 'inventory', icon: '📦', label: 'Inventory' },
+      { id: 'procurement', icon: '🛒', label: 'Procurement' },
     ],
   },
   {

@@ -1,0 +1,97 @@
+/* ─────────────────────────────────────────────────────────────
+   Inventory + Procurement module styles (only what the design
+   system doesn't already cover). Uses existing CSS variables.
+   ───────────────────────────────────────────────────────────── */
+
+/* Purchase-order line items editor */
+.po-lines { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.po-line {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) 70px 110px 110px 34px;
+  gap: 8px;
+  align-items: center;
+}
+.po-line-head {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.po-line .po-line-total {
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: right;
+  font-size: 13px;
+}
+.po-line-remove {
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
+  color: var(--error);
+  border-radius: 8px;
+  height: 34px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+.po-line-remove:hover { background: var(--error-subtle); }
+.po-totals {
+  display: flex;
+  justify-content: flex-end;
+  gap: 26px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.po-totals .po-sub { color: var(--text-secondary); font-weight: 600; }
+
+@media (max-width: 640px) {
+  .po-line { grid-template-columns: 1fr 1fr; }
+  .po-line-head { display: none; }
+}
+
+/* Machine-fill reference list */
+.fill-list { display: flex; flex-direction: column; }
+.fill-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 70px 130px;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+  align-items: center;
+}
+.fill-row:last-child { border-bottom: none; }
+.fill-row .fill-name { color: var(--text-primary); }
+.fill-row .fill-qty { color: var(--text-secondary); text-align: right; }
+.fill-row .fill-price { color: var(--text-primary); text-align: right; font-weight: 600; }
+.fill-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 2px solid var(--border-subtle);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.fill-total .fill-total-val { color: var(--brand); }
+
+/* Supplier list (procurement) */
+.sup-list { display: flex; flex-direction: column; gap: 8px; }
+.sup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+}
+.sup-item .sup-name { font-weight: 700; color: var(--text-primary); font-size: 13px; }
+.sup-item .sup-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }

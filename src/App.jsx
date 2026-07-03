@@ -18,6 +18,8 @@ import EmptyProtocol from './pages/EmptyProtocol.jsx'
 import EmptyRecords from './pages/EmptyRecords.jsx'
 import EmptyChecklist from './pages/EmptyChecklist.jsx'
 import History from './pages/History.jsx'
+import Inventory from './pages/Inventory.jsx'
+import Procurement from './pages/Procurement.jsx'
 import { defaultPage } from './lib/nav.js'
 
 const PAGES = {
@@ -32,6 +34,8 @@ const PAGES = {
   'empty-records': EmptyRecords,
   'empty-checklist': EmptyChecklist,
   history: History,
+  inventory: Inventory,
+  procurement: Procurement,
 }
 
 // Which pages each role may open.
