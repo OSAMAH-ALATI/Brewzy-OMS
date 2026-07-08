@@ -3,8 +3,8 @@ import Modal from './Modal.jsx'
 import { useApp } from '../context/AppContext.jsx'
 import { useT } from '../lib/i18n.js'
 import {
-  getDueStatus, formatDate, today, nowTime,
-  taskDueThisVisit, FREQ_LABEL, FREQ_CLASS,
+  getDueStatus, formatDate, formatDuty, today, nowTime,
+  taskDueThisVisit, nextDueLabel, FREQ_LABEL, FREQ_CLASS,
 } from '../lib/utils.js'
 
 // Complete a service cycle for a machine.
@@ -22,7 +22,7 @@ export default function ServiceModal({ open, machineId, onClose }) {
   const tasks = machine?.tasks || []
   const visibleTasks = tasks.filter((t) => {
     if (t.freq === 'tech' || t.isTech) return true
-    return taskDueThisVisit(t, vc)
+    return taskDueThisVisit(t, vc, new Date())
   })
 
   const [checked, setChecked] = useState({})
@@ -112,7 +112,7 @@ export default function ServiceModal({ open, machineId, onClose }) {
           <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--text-secondary)' }}>{machine.machineId}</span>
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
-          📍 {machine.location} &nbsp;·&nbsp; 🌅 {t(machine.duty || 'Morning')} &nbsp;·&nbsp; {t(machine.frequency)} &nbsp;·&nbsp; {t('Visit #')}{vc}
+          📍 {machine.location} &nbsp;·&nbsp; 🕐 {t(formatDuty(machine.duty))} &nbsp;·&nbsp; {t(machine.frequency)} &nbsp;·&nbsp; {t('Visit #')}{vc}
         </div>
         <div style={{ fontSize: 12, marginTop: 2 }}>
           {t('Last service:')} {formatDate(machine.lastService)} &nbsp;·&nbsp;{' '}
@@ -138,6 +138,9 @@ export default function ServiceModal({ open, machineId, onClose }) {
                     {t(FREQ_LABEL[task.freq] || task.freq)}
                   </span>
                 </div>
+                <span style={{ color: 'var(--text-tertiary)', fontSize: 11 }}>
+                  {t('Next') + ': ' + t(nextDueLabel(task))}
+                </span>
               </div>
             </div>
           ))

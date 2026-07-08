@@ -52,14 +52,32 @@ export const MANAGER_DEPTS = [
   },
 ]
 
-// Worker sidebar — flat section; items filtered by access control
-export const WORKER_ITEMS = [
-  { id: 'route', icon: '🗺️', label: "Today's Route", access: 'route' },
-  { id: 'issues', icon: '⚠️', label: 'Issues', access: 'issues' },
-  { id: 'machines', icon: '☕', label: 'Machine Directory', access: 'machines' },
-  { id: 'history', icon: '📋', label: 'Service History', access: 'history' },
-  { id: 'empty-checklist', icon: '🔌', label: 'Empty Checklist', access: 'empty_checklist' },
+// Pages a manager can grant to non-manager roles (operators/technicians/…).
+// `pageId` is the router id; `accessKey` is the stable permission key stored in
+// accessControl (kept stable so existing saved permissions keep working).
+// The two admin pages (Team Management, Access Control) are intentionally NOT
+// grantable — only managers can manage users and permissions.
+export const GRANTABLE_PAGES = [
+  { pageId: 'dashboard', accessKey: 'dashboard', icon: '📊', label: 'Dashboard', desc: 'Operations overview and charts' },
+  { pageId: 'route', accessKey: 'route', icon: '🗺️', label: "Today's Route", desc: 'View assigned machines and due status' },
+  { pageId: 'machines', accessKey: 'machines', icon: '☕', label: 'Machine Directory', desc: 'View the machine list' },
+  { pageId: 'issues', accessKey: 'issues', icon: '⚠️', label: 'Issue Tracker', desc: 'View, report and update issues' },
+  { pageId: 'history', accessKey: 'history', icon: '📋', label: 'Service History', desc: 'View past service records' },
+  { pageId: 'tasks', accessKey: 'tasks', icon: '✅', label: 'Tasks Library', desc: 'View and edit maintenance tasks' },
+  { pageId: 'empty', accessKey: 'empty', icon: '🔌', label: 'Empty Machine Protocol', desc: 'Edit the emptying steps' },
+  { pageId: 'empty-records', accessKey: 'empty_records', icon: '📋', label: 'Empty Records', desc: 'View machine emptying records' },
+  { pageId: 'empty-checklist', accessKey: 'empty_checklist', icon: '🔌', label: 'Empty Checklist', desc: 'Use the machine emptying checklist' },
+  { pageId: 'inventory', accessKey: 'inventory', icon: '📦', label: 'Inventory', desc: 'View and manage stock' },
+  { pageId: 'procurement', accessKey: 'procurement', icon: '🛒', label: 'Procurement', desc: 'Suppliers and purchase orders' },
 ]
+
+// Worker sidebar — flat section; items filtered by access control.
+export const WORKER_ITEMS = GRANTABLE_PAGES.map((p) => ({
+  id: p.pageId, icon: p.icon, label: p.label, access: p.accessKey,
+}))
+
+// pageId → accessKey map used by the router to guard worker access.
+export const WORKER_ACCESS = Object.fromEntries(GRANTABLE_PAGES.map((p) => [p.pageId, p.accessKey]))
 
 export function defaultPage(role) {
   return role === 'manager' ? 'dashboard' : 'route'

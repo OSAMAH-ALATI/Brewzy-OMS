@@ -1,17 +1,11 @@
 import { useApp } from '../context/AppContext.jsx'
 import { useT } from '../lib/i18n.js'
+import { GRANTABLE_PAGES } from '../lib/nav.js'
 
 // Manager-only page-access control for operators and technicians.
 const ROLES = [
   { id: 'operator', label: '🚗 Operator — Page Access' },
   { id: 'technician', label: '🔧 Technician — Page Access' },
-]
-const FEATURES = [
-  { id: 'route', label: "Today's Route", icon: '🗺️', desc: 'View assigned machines and due status' },
-  { id: 'issues', label: 'Issues', icon: '⚠️', desc: 'View, report and update issues' },
-  { id: 'history', label: 'Service History', icon: '📋', desc: 'View past service records' },
-  { id: 'empty_checklist', label: 'Empty Checklist', icon: '🔌', desc: 'Access the machine emptying checklist' },
-  { id: 'machines', label: 'Machine Directory', icon: '☕', desc: 'View the full machine list (read-only)' },
 ]
 
 export default function Access() {
@@ -39,7 +33,7 @@ export default function Access() {
       <div className="ph">
         <div className="ph-text">
           <h1>{t('Access Control')}</h1>
-          <p>{t('Choose which pages operators and technicians can see')}</p>
+          <p>{t('Grant operators and technicians access to any page you choose')}</p>
         </div>
       </div>
 
@@ -77,9 +71,9 @@ export default function Access() {
               <div className="card-title">{t(role.label)}</div>
             </div>
             <div style={{ padding: '8px 20px 16px' }}>
-              {FEATURES.map((f) => (
+              {GRANTABLE_PAGES.map((f) => (
                 <div
-                  key={f.id}
+                  key={f.accessKey}
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' }}
                 >
                   <div>
@@ -89,8 +83,8 @@ export default function Access() {
                   <label className="toggle-wrap">
                     <input
                       type="checkbox"
-                      checked={!!access[role.id]?.[f.id]}
-                      onChange={(e) => toggle(role.id, f.id, e.target.checked)}
+                      checked={!!access[role.id]?.[f.accessKey]}
+                      onChange={(e) => toggle(role.id, f.accessKey, e.target.checked)}
                     />
                     <span className="toggle-track" />
                   </label>

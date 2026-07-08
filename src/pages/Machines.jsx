@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { useT } from '../lib/i18n.js'
-import { getDueStatus, formatDate } from '../lib/utils.js'
+import { getDueStatus, formatDate, formatDuty } from '../lib/utils.js'
 import ServiceModal from '../components/ServiceModal.jsx'
 import IssueModal from '../components/IssueModal.jsx'
 import MachineModal from '../components/MachineModal.jsx'
@@ -100,7 +100,7 @@ export default function Machines({ onNavigate }) {
                     </div>
                   </td>
                   <td style={{ color: 'var(--text-secondary)' }}>{m.location}</td>
-                  <td><span className="stat-pill">{t(m.duty || 'Morning')}</span></td>
+                  <td><span className="stat-pill">{t(formatDuty(m.duty))}</span></td>
                   <td style={{ color: 'var(--text-secondary)' }}>{t(m.frequency)}</td>
                   <td style={{ color: 'var(--text-secondary)' }}>{formatDate(m.lastService)}</td>
                   <td><span className={'badge ' + dueBdg(due)}>{t(due)}</span></td>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { useT } from '../lib/i18n.js'
-import { getDueStatus, formatDate } from '../lib/utils.js'
+import { getDueStatus, formatDate, formatDuty } from '../lib/utils.js'
 import ServiceModal from '../components/ServiceModal.jsx'
 import IssueModal from '../components/IssueModal.jsx'
 
@@ -79,7 +79,7 @@ export default function RoutePage({ onNavigate }) {
                   <span style={{ fontWeight: 400, color: 'var(--text-secondary)', fontSize: 12 }}>{m.machineId}</span>
                 </div>
                 <div className="route-meta">
-                  📍 {m.location} &nbsp;·&nbsp; 🌅 {t(m.duty || 'Morning')} {t('shift')} &nbsp;·&nbsp; 🔧 {getUserName(m.technician)}
+                  📍 {m.location} &nbsp;·&nbsp; 🕐 {t(formatDuty(m.duty))} &nbsp;·&nbsp; 🔧 {getUserName(m.technician)}
                 </div>
                 <div className="stat-row">
                   <span className={'badge ' + dueBadge(due)}>{t(due)}</span>

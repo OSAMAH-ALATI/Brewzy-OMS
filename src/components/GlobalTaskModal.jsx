@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { useT } from '../lib/i18n.js'
-import { clone, freqMatchesMachineFreq, FREQ_LABEL } from '../lib/utils.js'
+import { clone, freqMatchesMachineFreq, FREQ_LABEL, WEEKDAYS } from '../lib/utils.js'
 import Modal from './Modal.jsx'
 
-const FREQ_OPTS = ['daily', 'every2', 'every3', 'weekly', 'tech']
+const FREQ_OPTS = ['daily', 'every2', 'every3', 'weekly', 'monthly', 'tech']
 
 // Create / edit a library (global) task and optionally push it into machines.
 // editIndex: number => edit globalTasks[editIndex]; null => new task.
@@ -16,6 +16,8 @@ export default function GlobalTaskModal({ open, editIndex, onClose }) {
 
   const [name, setName] = useState('')
   const [freq, setFreq] = useState('daily')
+  const [weekday, setWeekday] = useState(0)
+  const [dayOfMonth, setDayOfMonth] = useState(1)
   const [checked, setChecked] = useState([]) // machine ids
 
   // Reset fields whenever the modal opens.
@@ -24,6 +26,8 @@ export default function GlobalTaskModal({ open, editIndex, onClose }) {
     const t = editing ? globalTasks[editIndex] : null
     setName(t ? t.name : '')
     setFreq(t ? t.freq : 'daily')
+    setWeekday(t && t.weekday != null ? t.weekday : 0)
+    setDayOfMonth(t && t.dayOfMonth != null ? t.dayOfMonth : 1)
     if (t) {
       setChecked(machines.filter((m) => (m.tasks || []).some((mt) => mt.id === t.id)).map((m) => m.id))
     } else {
@@ -48,14 +52,20 @@ export default function GlobalTaskModal({ open, editIndex, onClose }) {
     const n = name.trim()
     if (!n) { showToast(t('Please enter a task name'), '⚠️'); return }
 
+    const schedule = freq === 'weekly'
+      ? { weekday: Number(weekday) }
+      : freq === 'monthly'
+        ? { dayOfMonth: Number(dayOfMonth) }
+        : {}
+
     let task
     let newTasks
     if (editing) {
-      const tid = globalTasks[editIndex].id
-      task = { ...globalTasks[editIndex], name: n, freq, isTech: freq === 'tech' }
+      const { weekday: _w, dayOfMonth: _d, ...base } = globalTasks[editIndex]
+      task = { ...base, name: n, freq, isTech: freq === 'tech', ...schedule }
       newTasks = globalTasks.map((t, i) => (i === editIndex ? task : t))
     } else {
-      task = { id: genId('t_'), name: n, freq, isTech: freq === 'tech' }
+      task = { id: genId('t_'), name: n, freq, isTech: freq === 'tech', ...schedule }
       newTasks = [...globalTasks, task]
     }
     updateConfig({ globalTasks: newTasks })
@@ -98,6 +108,24 @@ export default function GlobalTaskModal({ open, editIndex, onClose }) {
           {FREQ_OPTS.map((f) => <option key={f} value={f}>{t(FREQ_LABEL[f])}</option>)}
         </select>
       </div>
+
+      {freq === 'weekly' && (
+        <div className="form-group">
+          <label className="form-label">{t('Day of Week')}</label>
+          <select className="form-control" value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
+            {WEEKDAYS.map((d, i) => <option key={i} value={i}>{t(d)}</option>)}
+          </select>
+        </div>
+      )}
+
+      {freq === 'monthly' && (
+        <div className="form-group">
+          <label className="form-label">{t('Day of Month')}</label>
+          <select className="form-control" value={dayOfMonth} onChange={(e) => setDayOfMonth(Number(e.target.value))}>
+            {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+      )}
 
       {freq !== 'tech' && (
         <div style={{ background: 'var(--brand-subtle)', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>

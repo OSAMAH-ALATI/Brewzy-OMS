@@ -6,8 +6,16 @@ import { genId, today, clone } from '../lib/utils.js'
 
 const EMPTY = {
   name: '', machineId: '', orderNumber: '', location: '', mapsLink: '',
-  duty: 'Morning', frequency: 'Daily', status: 'Active',
+  duty: '08:00', frequency: 'Daily', status: 'Active',
   operators: [], technician: '', lastService: '', notes: '',
+}
+
+// Convert a legacy shift word to a specific time so the field always shows a time.
+const toTimeValue = (d) => {
+  if (/^\d{1,2}:\d{2}$/.test(d || '')) return d
+  if (d === 'Evening') return '16:00'
+  if (d === 'Both') return '12:00'
+  return '08:00' // Morning / unknown / empty
 }
 
 export default function MachineModal({ open, machineId, onClose }) {
@@ -26,7 +34,7 @@ export default function MachineModal({ open, machineId, onClose }) {
       if (m) {
         setForm({
           name: m.name || '', machineId: m.machineId || '', orderNumber: m.orderNumber || '',
-          location: m.location || '', mapsLink: m.mapsLink || '', duty: m.duty || 'Morning',
+          location: m.location || '', mapsLink: m.mapsLink || '', duty: toTimeValue(m.duty),
           frequency: m.frequency || 'Daily', status: m.status || 'Active',
           operators: [...(m.operators || [])], technician: m.technician || '',
           lastService: m.lastService || '', notes: m.notes || '',
@@ -145,10 +153,9 @@ export default function MachineModal({ open, machineId, onClose }) {
 
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">{t('Operation Duty')}</label>
-          <select className="form-control" value={form.duty} onChange={(e) => set('duty', e.target.value)}>
-            <option value="Morning">{t('Morning')}</option><option value="Evening">{t('Evening')}</option><option value="Both">{t('Both')}</option>
-          </select>
+          <label className="form-label">{t('Operation Time')}</label>
+          <input className="form-control" type="time" value={toTimeValue(form.duty)} onChange={(e) => set('duty', e.target.value)} />
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>{t('The time this machine is serviced (e.g. 8:00 AM)')}</div>
         </div>
         <div className="form-group">
           <label className="form-label">{t('Service Frequency')}</label>

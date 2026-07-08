@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import { useT } from '../lib/i18n.js'
-import { clone, FREQ_LABEL } from '../lib/utils.js'
+import { clone, FREQ_LABEL, WEEKDAYS } from '../lib/utils.js'
 import Modal from './Modal.jsx'
 
-const FREQ_OPTS = ['daily', 'every2', 'every3', 'weekly', 'tech']
+const FREQ_OPTS = ['daily', 'every2', 'every3', 'weekly', 'monthly', 'tech']
 
 // Edit ONE machine's task list. Works on a local copy; Save persists, Cancel discards.
 export default function TasksModal({ open, machineId, onClose }) {
@@ -15,6 +15,8 @@ export default function TasksModal({ open, machineId, onClose }) {
   const [tasks, setTasks] = useState([])
   const [newName, setNewName] = useState('')
   const [newFreq, setNewFreq] = useState('daily')
+  const [newWeekday, setNewWeekday] = useState(0)
+  const [newDayOfMonth, setNewDayOfMonth] = useState(1)
 
   // Seed the local copy each time the modal opens.
   useEffect(() => {
@@ -22,13 +24,24 @@ export default function TasksModal({ open, machineId, onClose }) {
     setTasks(clone(machine?.tasks || []))
     setNewName('')
     setNewFreq('daily')
+    setNewWeekday(0)
+    setNewDayOfMonth(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, machineId])
 
   if (!open || !machine) return null
 
   const setTaskName = (i, val) => setTasks((ts) => ts.map((t, j) => (j === i ? { ...t, name: val } : t)))
-  const setTaskFreq = (i, val) => setTasks((ts) => ts.map((t, j) => (j === i ? { ...t, freq: val, isTech: val === 'tech' } : t)))
+  const setTaskFreq = (i, val) => setTasks((ts) => ts.map((t, j) => {
+    if (j !== i) return t
+    const { weekday, dayOfMonth, ...base } = t
+    const next = { ...base, freq: val, isTech: val === 'tech' }
+    if (val === 'weekly') next.weekday = weekday != null ? weekday : 0
+    if (val === 'monthly') next.dayOfMonth = dayOfMonth != null ? dayOfMonth : 1
+    return next
+  }))
+  const setTaskWeekday = (i, val) => setTasks((ts) => ts.map((t, j) => (j === i ? { ...t, weekday: Number(val) } : t)))
+  const setTaskDayOfMonth = (i, val) => setTasks((ts) => ts.map((t, j) => (j === i ? { ...t, dayOfMonth: Number(val) } : t)))
   const removeTask = (i) => setTasks((ts) => ts.filter((_, j) => j !== i))
   const move = (i, dir) => setTasks((ts) => {
     const j = i + dir
@@ -40,7 +53,12 @@ export default function TasksModal({ open, machineId, onClose }) {
   const addTask = () => {
     const n = newName.trim()
     if (!n) { showToast(tr('Enter a task description first'), '⚠️'); return }
-    setTasks((ts) => [...ts, { id: genId('t_'), name: n, freq: newFreq, isTech: newFreq === 'tech' }])
+    const schedule = newFreq === 'weekly'
+      ? { weekday: Number(newWeekday) }
+      : newFreq === 'monthly'
+        ? { dayOfMonth: Number(newDayOfMonth) }
+        : {}
+    setTasks((ts) => [...ts, { id: genId('t_'), name: n, freq: newFreq, isTech: newFreq === 'tech', ...schedule }])
     setNewName('')
   }
 
@@ -83,6 +101,16 @@ export default function TasksModal({ open, machineId, onClose }) {
             <select className="form-control" style={{ minWidth: 130, flexShrink: 0 }} value={t.freq} onChange={(e) => setTaskFreq(i, e.target.value)}>
               {FREQ_OPTS.map((f) => <option key={f} value={f}>{tr(FREQ_LABEL[f])}</option>)}
             </select>
+            {t.freq === 'weekly' && (
+              <select className="form-control" style={{ minWidth: 110, flexShrink: 0 }} value={t.weekday ?? 0} onChange={(e) => setTaskWeekday(i, e.target.value)}>
+                {WEEKDAYS.map((d, di) => <option key={di} value={di}>{tr(d)}</option>)}
+              </select>
+            )}
+            {t.freq === 'monthly' && (
+              <select className="form-control" style={{ minWidth: 70, flexShrink: 0 }} value={t.dayOfMonth ?? 1} onChange={(e) => setTaskDayOfMonth(i, e.target.value)}>
+                {Array.from({ length: 28 }, (_, di) => di + 1).map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            )}
             <button className="btn btn-ghost btn-sm" onClick={() => removeTask(i)} title={tr('Remove task')} style={{ color: 'var(--red)', flexShrink: 0 }}>🗑</button>
           </div>
         ))}
@@ -97,6 +125,16 @@ export default function TasksModal({ open, machineId, onClose }) {
           <select className="form-control" style={{ minWidth: 130 }} value={newFreq} onChange={(e) => setNewFreq(e.target.value)}>
             {FREQ_OPTS.map((f) => <option key={f} value={f}>{tr(FREQ_LABEL[f])}</option>)}
           </select>
+          {newFreq === 'weekly' && (
+            <select className="form-control" style={{ minWidth: 110 }} value={newWeekday} onChange={(e) => setNewWeekday(Number(e.target.value))}>
+              {WEEKDAYS.map((d, di) => <option key={di} value={di}>{tr(d)}</option>)}
+            </select>
+          )}
+          {newFreq === 'monthly' && (
+            <select className="form-control" style={{ minWidth: 70 }} value={newDayOfMonth} onChange={(e) => setNewDayOfMonth(Number(e.target.value))}>
+              {Array.from({ length: 28 }, (_, di) => di + 1).map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+          )}
           <button className="btn btn-teal" onClick={addTask}>+ {tr('Add Task')}</button>
         </div>
       </div>

@@ -20,7 +20,7 @@ import EmptyChecklist from './pages/EmptyChecklist.jsx'
 import History from './pages/History.jsx'
 import Inventory from './pages/Inventory.jsx'
 import Procurement from './pages/Procurement.jsx'
-import { defaultPage } from './lib/nav.js'
+import { defaultPage, WORKER_ACCESS } from './lib/nav.js'
 
 const PAGES = {
   dashboard: Dashboard,
@@ -40,7 +40,6 @@ const PAGES = {
 
 // Which pages each role may open.
 const MANAGER_PAGES = Object.keys(PAGES)
-const WORKER_BASE = { route: 'route', issues: 'issues', machines: 'machines', history: 'history', 'empty-checklist': 'empty_checklist' }
 
 function Loader({ label }) {
   return (
@@ -88,8 +87,34 @@ export default function App() {
   let pageId = current
   const allowed = role === 'manager'
     ? MANAGER_PAGES
-    : Object.entries(WORKER_BASE).filter(([, key]) => access?.[role]?.[key]).map(([p]) => p)
-  if (!allowed.includes(pageId)) pageId = defaultPage(role)
+    : Object.entries(WORKER_ACCESS).filter(([, key]) => access?.[role]?.[key]).map(([p]) => p)
+  if (!allowed.includes(pageId)) {
+    pageId = allowed.includes(defaultPage(role)) ? defaultPage(role) : allowed[0]
+  }
+
+  // Worker with no pages granted yet — show a friendly message.
+  if (!pageId) {
+    return (
+      <div id="app" style={{ display: 'block' }}>
+        <div className="app-body">
+          <Sidebar current={null} onNavigate={setCurrent} mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
+          <div className="main">
+            <Topbar current={null} onToggleMobile={() => setMobileOpen((v) => !v)} onNavigate={setCurrent} />
+            <div className="page-body">
+              <div className="card" style={{ margin: 24 }}>
+                <div className="empty-state" style={{ padding: 40 }}>
+                  <div className="empty-icon">🔒</div>
+                  <p>{t('No pages have been granted to your account yet. Please contact your manager.')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Toast />
+        <ConfirmDialog />
+      </div>
+    )
+  }
 
   const PageComp = PAGES[pageId] || Dashboard
 

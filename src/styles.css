@@ -490,7 +490,8 @@ select[multiple].form-control{height:90px}
 ════════════════════════════════════════════════════════ */
 .modal-overlay{
   display:none;position:fixed;inset:0;z-index:2000;
-  align-items:center;justify-content:center;padding:24px;
+  align-items:flex-start;justify-content:center;padding:24px;
+  overflow-y:auto;overflow-x:hidden;
   background:var(--modal-backdrop);backdrop-filter:blur(10px) saturate(1.2);
 }
 .modal-overlay.open{display:flex;animation:mBg var(--dur) var(--ease)}
@@ -498,7 +499,10 @@ select[multiple].form-control{height:90px}
 .modal{
   background:var(--surface);border:1px solid var(--border);
   border-radius:var(--r16);width:100%;max-width:620px;
-  max-height:90vh;overflow-y:auto;
+  /* margin:auto centers vertically when it fits; when taller than the screen it
+     top-aligns and the overlay scrolls, so the top is never clipped. */
+  margin:auto;
+  max-height:calc(100dvh - 48px);overflow-y:auto;overflow-x:hidden;
   box-shadow:var(--e4),0 0 0 1px var(--border);
   animation:mSlide var(--dur-slow) var(--ease-spring);
   transition:background var(--dur) var(--ease);
